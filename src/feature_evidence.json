@@ -1,0 +1,110 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-build-a-frontend-ui-to-manage-subscribers-list-search-subscribers-add-edit-subscriber-details-name-whatsapp-number-start-date-package-and-deactivate-reactivate-subscribers",
+      "featureTitle": "Build a frontend UI to manage subscribers: list/search subscribers, add/edit subscriber details (name, WhatsApp number, start date, package), and deactivate/reactivate subscribers.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/SubscribersPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-in-the-subscriber-details-and-subscriber-list-ui-provide-a-one-click-whatsapp-action-that-opens-a-chat-using-the-stored-phone-number-via-a-wa-me-link",
+      "featureTitle": "In the subscriber details and subscriber list UI, provide a one-click WhatsApp action that opens a chat using the stored phone number via a wa.me link.",
+      "files": [
+        "frontend/src/lib/whatsapp.ts",
+        "frontend/src/pages/SubscribersPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-monthly-billing-screen-select-a-year-and-month-view-all-active-subscribers-with-their-package-due-amount-usd-and-paid-due-status-allow-toggling-paid-status-for-that-month",
+      "featureTitle": "Build a monthly billing screen: select a year and month, view all active subscribers with their package, due amount (USD), and paid/due status; allow toggling paid status for that month.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/lib/money.ts",
+        "frontend/src/pages/BillingPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-totals-reporting-dashboard-showing-a-total-required-amount-for-the-selected-month-usd-and-b-a-year-summary-total-usd-include-the-business-name-taha-net-in-the-app-header",
+      "featureTitle": "Build a totals/reporting dashboard showing: (a) total required amount for the selected month (USD) and (b) a year summary total (USD). Include the business name 'TAHA @NET' in the app header.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/DashboardPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-consistent-coherent-visual-theme-for-the-app-ui-colors-typography-layout-use-a-distinct-style-suitable-for-an-internet-center-billing-tool-avoid-blue-purple",
+      "featureTitle": "Apply a consistent, coherent visual theme for the app UI (colors, typography, layout). Use a distinct style suitable for an internet center billing tool (avoid blue/purple).",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/auth/AuthGate.tsx",
+        "frontend/src/components/auth/LoginButton.tsx",
+        "frontend/src/components/auth/ProfileSetupModal.tsx",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

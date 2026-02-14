@@ -1,0 +1,157 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Internet Center Subscriber Accounting App (USD Monthly Billing) — Frontend",
+  "requirements": [
+    {
+      "id": "REQ-5",
+      "summary": "Subscriber management UI: list/search, add/edit details, and deactivate/reactivate subscribers.",
+      "acceptanceCriteria": [
+        "Users can add a new subscriber from the UI and see it appear in the list without a page reload.",
+        "Users can edit an existing subscriber and see changes reflected immediately.",
+        "Users can deactivate a subscriber; deactivated subscribers are visually distinct and excluded from totals by default."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SubscribersPage.tsx",
+          "operation": "create",
+          "description": "Create the Subscribers management screen with: searchable table, inline actions (edit, deactivate/reactivate), and an add/edit dialog for full name, WhatsApp phone, subscription start date, and package selection. Use shadcn-ui components (e.g., Table, Dialog, Button, Input, Select, Badge) for consistent UI. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSubscribers.ts",
+          "operation": "create",
+          "description": "Add React Query hooks to load subscribers (default: active list), create subscribers, update subscribers, and keep UI in sync by invalidating/refetching queries after mutations."
+        },
+        {
+          "path": "frontend/src/hooks/usePackages.ts",
+          "operation": "create",
+          "description": "Add React Query hook to load the package list for subscriber create/edit forms and to support showing package names/prices in the subscribers table."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the app shell and navigation wiring to include a Subscribers view entry. Ensure authenticated gating (authorization component) so app data is not shown to guests. Use shadcn-ui navigation primitives as appropriate (e.g., Tabs/Buttons). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Add one-click WhatsApp (wa.me) action per subscriber with validation.",
+      "acceptanceCriteria": [
+        "Each subscriber row (or details view) includes an 'Open WhatsApp' action.",
+        "Clicking the action opens https://wa.me/<phone> in a new tab using the subscriber’s stored number.",
+        "If the phone number is missing/invalid, the UI prevents the action and shows a clear validation message."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/whatsapp.ts",
+          "operation": "create",
+          "description": "Implement helpers to validate/sanitize WhatsApp phone numbers and construct a wa.me URL; expose a function the UI can call to decide whether to enable/disable the action."
+        },
+        {
+          "path": "frontend/src/pages/SubscribersPage.tsx",
+          "operation": "modify",
+          "description": "Add an 'Open WhatsApp' action to each subscriber row (and/or edit/details dialog) that opens a new tab to the wa.me link when valid; show an inline validation message (e.g., via shadcn-ui Toast/Alert/Tooltip) when invalid. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Monthly billing screen: select year/month, view active subscribers with due amount (USD) and paid/due status, and toggle paid state with persistence.",
+      "acceptanceCriteria": [
+        "User can select a month and year and see a table of subscribers with USD due amounts.",
+        "User can mark a subscriber as paid/unpaid for the selected month; state persists after refresh.",
+        "UI displays currency consistently as USD (e.g., $5.00)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/BillingPage.tsx",
+          "operation": "create",
+          "description": "Create the Monthly Billing screen with year/month selectors and a table of active subscribers. Show package name, formatted USD due amount, and paid/due status. Provide a toggle to mark paid/unpaid (and due if needed) that persists via backend calls. Use shadcn-ui components (Select, Table, Switch/Checkbox, Button, Skeleton) for consistent UX. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useBilling.ts",
+          "operation": "create",
+          "description": "Add React Query hooks to fetch each subscriber’s billing view for a year and to update a specific month’s status (paid/due) for the selected subscriber, then invalidate relevant queries so the UI persists after refresh."
+        },
+        {
+          "path": "frontend/src/lib/money.ts",
+          "operation": "create",
+          "description": "Add a USD-only formatter utility (e.g., Intl.NumberFormat) and conversion helpers for bigint amounts used by the backend interface, ensuring consistent display like $5.00 across the app."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the Monthly Billing screen into the app navigation so it is reachable from the header/nav, and ensure it remains behind the authenticated gate (authorization component). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Totals/reporting dashboard with monthly and yearly USD totals; header includes business name 'TAHA @NET'.",
+      "acceptanceCriteria": [
+        "Dashboard shows a monthly total and a yearly total in USD.",
+        "Totals match backend reporting results.",
+        "App header displays 'TAHA @NET'."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/DashboardPage.tsx",
+          "operation": "create",
+          "description": "Create the Dashboard screen with month/year controls and summary cards for monthly total due and yearly total due (USD), matching backend reporting results. Use shadcn-ui components (Card, Select, Skeleton) for readable reporting UI. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useTotals.ts",
+          "operation": "create",
+          "description": "Add React Query hooks to fetch totals for a selected month and selected year, and expose loading/error states for the dashboard."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Implement the app header with the visible business name 'TAHA @NET' and wire the Dashboard as a primary navigation destination. Keep all application data behind login per the authorization component guidance. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Apply a consistent theme (no blue/purple) suitable for an internet center billing tool, with readable table layouts.",
+      "acceptanceCriteria": [
+        "All main screens share consistent typography, spacing, and component styling.",
+        "Primary/secondary colors are not blue or purple.",
+        "The layout remains readable for tables (subscribers and monthly billing)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "create",
+          "description": "Define global theme tokens (CSS variables used by Tailwind/shadcn-ui) with a cohesive palette that avoids blue/purple (e.g., charcoal + green/amber accents), plus consistent typography and spacing defaults for tables/forms."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Adjust/confirm Tailwind theme mappings rely on CSS variables and ensure table/container sizing supports dense billing tables (without introducing blue/purple brand colors)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Apply a consistent layout wrapper (header + content container) shared across Dashboard, Subscribers, and Billing screens to enforce coherent spacing and readability using shadcn-ui layout primitives where appropriate. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/AuthGate.tsx",
+          "operation": "create",
+          "description": "Implement an authenticated gate using the authorization component guidance: require Internet Identity login before rendering app screens; handle unauthorized/trap errors gracefully with a dedicated screen. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/ProfileSetupModal.tsx",
+          "operation": "create",
+          "description": "Implement first-login profile setup (prompt for a display name) using the authorization component guidance (getCallerUserProfile/saveCallerUserProfile) and prevent modal flash via the recommended loading/isFetched pattern. Use shadcn-ui Dialog/Form components for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/LoginButton.tsx",
+          "operation": "create",
+          "description": "Create a Login/Logout button using the authorization component guidance (useInternetIdentity + clear React Query cache on logout) and style it to match the non-blue/non-purple theme. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "kind": "build_request",
+  "title": "Internet Center Subscriber Accounting App (USD Monthly Billing)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Create a backend data model and CRUD API for internet subscribers including: full name, WhatsApp phone number, subscription start date, selected package, and an active/inactive status.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "لدي مشتركين ... رقم المشترك المراسلة على واتساب ... تاريخ الاشتراك"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend can create, read, update, and archive (deactivate) a subscriber.",
+        "Subscriber record includes: name (text), WhatsApp phone (text), subscription start date (date), packageId (text), isActive (bool).",
+        "Listing subscribers returns all subscribers with their current package and status."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Create a backend data model and API for internet packages priced in USD, pre-seeded with: Package '1MB' at $5/month and Package '2MB' at $10/month.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "نظام الدفع بالدولار الأمريكي",
+          "الباقات 1مغيا سعر $5",
+          "الباقة 2مغيا$10"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes endpoints to list packages and (optionally) add/edit packages.",
+        "On a fresh deploy, the packages list contains exactly the two default packages (1MB=$5, 2MB=$10) in USD."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement monthly billing tracking per subscriber: for each subscriber and month (across a year), store whether the month is due and optionally whether it is paid, with the due amount auto-derived from the subscriber’s package price in USD.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "مستحق الدفع كل شهر",
+          "كل شهر",
+          "المبلغ المطلوب"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend can create or update a billing entry for (subscriberId, year, month).",
+        "Due amount for a month equals the subscriber’s selected package USD price at the time of calculating the monthly due.",
+        "Backend can return a subscriber’s 12-month view for a given year (months 1-12 with due and paid status)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Provide backend reporting endpoints to compute totals in USD: (a) total required amount for a selected month across all active subscribers, and (b) overall totals across a selected year.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "الإجمالي المجموع",
+          "كل شهر",
+          "المبلغ المطلوب"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend returns a monthly total in USD for a given (year, month).",
+        "Backend returns a yearly total in USD for a given year.",
+        "Totals match the sum of monthly dues for active subscribers (optionally excluding months marked as not due, if supported)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Build a frontend UI to manage subscribers: list/search subscribers, add/edit subscriber details (name, WhatsApp number, start date, package), and deactivate/reactivate subscribers.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "إسم المشترك",
+          "الباقة",
+          "رقم المشترك المراسلة على واتساب",
+          "تاريخ الاشتراك"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can add a new subscriber from the UI and see it appear in the list without a page reload.",
+        "Users can edit an existing subscriber and see changes reflected immediately.",
+        "Users can deactivate a subscriber; deactivated subscribers are visually distinct and excluded from totals by default."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "In the subscriber details and subscriber list UI, provide a one-click WhatsApp action that opens a chat using the stored phone number via a wa.me link.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "رقم المشترك المراسلة على واتساب"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each subscriber row (or details view) includes an 'Open WhatsApp' action.",
+        "Clicking the action opens https://wa.me/<phone> in a new tab using the subscriber’s stored number.",
+        "If the phone number is missing/invalid, the UI prevents the action and shows a clear validation message."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Build a monthly billing screen: select a year and month, view all active subscribers with their package, due amount (USD), and paid/due status; allow toggling paid status for that month.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "مستحق الدفع كل شهر",
+          "كل شهر",
+          "المبلغ المطلوب"
+        ]
+      },
+      "acceptanceCriteria": [
+        "User can select a month and year and see a table of subscribers with USD due amounts.",
+        "User can mark a subscriber as paid/unpaid for the selected month; state persists after refresh.",
+        "UI displays currency consistently as USD (e.g., $5.00)."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Build a totals/reporting dashboard showing: (a) total required amount for the selected month (USD) and (b) a year summary total (USD). Include the business name 'TAHA @NET' in the app header.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "الإجمالي المجموع",
+          "TAHA @NET"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Dashboard shows a monthly total and a yearly total in USD.",
+        "Totals match backend reporting results.",
+        "App header displays 'TAHA @NET'."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Apply a consistent, coherent visual theme for the app UI (colors, typography, layout). Use a distinct style suitable for an internet center billing tool (avoid blue/purple).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "تطبيق محاسبة",
+          "مركز انترنت"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All main screens share consistent typography, spacing, and component styling.",
+        "Primary/secondary colors are not blue or purple.",
+        "The layout remains readable for tables (subscribers and monthly billing)."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "Do not modify frontend files under frontend/src/components/ui or any other immutable paths defined by the template.",
+    "Store and compute monetary values in USD only (no multi-currency).",
+    "Do not use external databases or third-party auth providers; if authentication is needed later, use Internet Identity only."
+  ],
+  "nonGoals": [
+    "No WhatsApp API integration or messaging automation (only opening wa.me links).",
+    "No SMS, push notifications, or email reminders.",
+    "No external accounting exports/integrations unless explicitly requested later."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Use English for user-facing UI text in generated app"
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Build an accounting app for an internet center to manage subscribers, monthly USD payments, packages, and billing totals.",
+  "architectural_notes": [
+    "Currency is USD; billing cycle is monthly; track payments/due per month across a full year.",
+    "Include WhatsApp number field for subscriber contact/messaging reference."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-build-a-frontend-ui-to-manage-subscribers-list-search-subscribers-add-edit-subscriber-details-name-whatsapp-number-start-date-package-and-deactivate-reactivate-subscribers",
+      "title": "Build a frontend UI to manage subscribers: list/search subscribers, add/edit subscriber details (name, WhatsApp number, start date, package), and deactivate/reactivate subscribers.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-subscriber-details-and-subscriber-list-ui-provide-a-one-click-whatsapp-action-that-opens-a-chat-using-the-stored-phone-number-via-a-wa-me-link",
+      "title": "In the subscriber details and subscriber list UI, provide a one-click WhatsApp action that opens a chat using the stored phone number via a wa.me link.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-monthly-billing-screen-select-a-year-and-month-view-all-active-subscribers-with-their-package-due-amount-usd-and-paid-due-status-allow-toggling-paid-status-for-that-month",
+      "title": "Build a monthly billing screen: select a year and month, view all active subscribers with their package, due amount (USD), and paid/due status; allow toggling paid status for that month.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-totals-reporting-dashboard-showing-a-total-required-amount-for-the-selected-month-usd-and-b-a-year-summary-total-usd-include-the-business-name-taha-net-in-the-app-header",
+      "title": "Build a totals/reporting dashboard showing: (a) total required amount for the selected month (USD) and (b) a year summary total (USD). Include the business name 'TAHA @NET' in the app header.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-consistent-coherent-visual-theme-for-the-app-ui-colors-typography-layout-use-a-distinct-style-suitable-for-an-internet-center-billing-tool-avoid-blue-purple",
+      "title": "Apply a consistent, coherent visual theme for the app UI (colors, typography, layout). Use a distinct style suitable for an internet center billing tool (avoid blue/purple).",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Subscriber management: store subscriber name/ID, subscription date, package, and WhatsApp contact number",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Packages/pricing: define internet packages (e.g., 1MB = $5, 2MB = $10) in USD",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Monthly billing tracking: monthly due amount per subscriber (USD) with month-by-month records across the year",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Totals & reporting: calculate monthly required amount and overall totals (الإجمالي المجموع)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Create a backend data model and CRUD API for internet subscribers including: full name, WhatsApp phone number, subscription start date, selected package, and an active/inactive status.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Create a backend data model and API for internet packages priced in USD, pre-seeded with: Package '1MB' at $5/month and Package '2MB' at $10/month.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Implement monthly billing tracking per subscriber: for each subscriber and month (across a year), store whether the month is due and optionally whether it is paid, with the due amount auto-derived from the subscriber’s package price in USD.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Provide backend reporting endpoints to compute totals in USD: (a) total required amount for a selected month across all active subscribers, and (b) overall totals across a selected year.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "TAHA @NET",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
