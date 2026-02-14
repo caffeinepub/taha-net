@@ -2,10 +2,15 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-build-a-frontend-ui-to-manage-subscribers-list-search-subscribers-add-edit-subscriber-details-name-whatsapp-number-start-date-package-and-deactivate-reactivate-subscribers",
-      "featureTitle": "Build a frontend UI to manage subscribers: list/search subscribers, add/edit subscriber details (name, WhatsApp number, start date, package), and deactivate/reactivate subscribers.",
+      "featureId": "feature-translate-all-user-visible-ui-text-in-the-frontend-to-arabic-across-the-entire-app-including-authentication-screens-navigation-pages-dashboard-subscribers-monthly-billing-dialogs-form-labels-placeholders-table-headers-empty-states-button-labels-and-toast-notifications",
+      "featureTitle": "Translate all user-visible UI text in the frontend to Arabic across the entire app, including authentication screens, navigation, pages (Dashboard, Subscribers, Monthly Billing), dialogs, form labels/placeholders, table headers, empty states, button labels, and toast notifications.",
       "files": [
         "frontend/src/App.tsx",
+        "frontend/src/components/auth/AuthGate.tsx",
+        "frontend/src/components/auth/LoginButton.tsx",
+        "frontend/src/components/auth/ProfileSetupModal.tsx",
+        "frontend/src/pages/BillingPage.tsx",
+        "frontend/src/pages/DashboardPage.tsx",
         "frontend/src/pages/SubscribersPage.tsx"
       ],
       "components": [
@@ -17,15 +22,20 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-in-the-subscriber-details-and-subscriber-list-ui-provide-a-one-click-whatsapp-action-that-opens-a-chat-using-the-stored-phone-number-via-a-wa-me-link",
-      "featureTitle": "In the subscriber details and subscriber list UI, provide a one-click WhatsApp action that opens a chat using the stored phone number via a wa.me link.",
+      "featureId": "feature-add-right-to-left-rtl-layout-support-for-arabic-including-setting-the-document-language-direction-appropriately-and-ensuring-main-app-layouts-header-nav-forms-tables-dialogs-render-correctly-in-rtl",
+      "featureTitle": "Add right-to-left (RTL) layout support for Arabic, including setting the document language/direction appropriately and ensuring main app layouts (header, nav, forms, tables, dialogs) render correctly in RTL.",
       "files": [
-        "frontend/src/lib/whatsapp.ts",
+        "frontend/index.html",
+        "frontend/src/App.tsx",
+        "frontend/src/components/auth/AuthGate.tsx",
+        "frontend/src/components/auth/LoginButton.tsx",
+        "frontend/src/index.css",
+        "frontend/src/pages/BillingPage.tsx",
         "frontend/src/pages/SubscribersPage.tsx"
       ],
       "components": [
@@ -37,36 +47,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-build-a-monthly-billing-screen-select-a-year-and-month-view-all-active-subscribers-with-their-package-due-amount-usd-and-paid-due-status-allow-toggling-paid-status-for-that-month",
-      "featureTitle": "Build a monthly billing screen: select a year and month, view all active subscribers with their package, due amount (USD), and paid/due status; allow toggling paid status for that month.",
+      "featureId": "feature-localize-month-names-and-any-date-related-labels-shown-in-month-year-selectors-and-billing-headings-to-arabic",
+      "featureTitle": "Localize month names and any date-related labels shown in month/year selectors and billing headings to Arabic.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/lib/money.ts",
-        "frontend/src/pages/BillingPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-build-a-totals-reporting-dashboard-showing-a-total-required-amount-for-the-selected-month-usd-and-b-a-year-summary-total-usd-include-the-business-name-taha-net-in-the-app-header",
-      "featureTitle": "Build a totals/reporting dashboard showing: (a) total required amount for the selected month (USD) and (b) a year summary total (USD). Include the business name 'TAHA @NET' in the app header.",
-      "files": [
-        "frontend/src/App.tsx",
+        "frontend/src/pages/BillingPage.tsx",
         "frontend/src/pages/DashboardPage.tsx"
       ],
       "components": [
@@ -78,31 +67,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-8"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-a-consistent-coherent-visual-theme-for-the-app-ui-colors-typography-layout-use-a-distinct-style-suitable-for-an-internet-center-billing-tool-avoid-blue-purple",
-      "featureTitle": "Apply a consistent, coherent visual theme for the app UI (colors, typography, layout). Use a distinct style suitable for an internet center billing tool (avoid blue/purple).",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/auth/AuthGate.tsx",
-        "frontend/src/components/auth/LoginButton.tsx",
-        "frontend/src/components/auth/ProfileSetupModal.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-9"
+        "REQ-3"
       ],
       "confidence": "high"
     }

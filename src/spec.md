@@ -1,17 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Build an internet center subscriber accounting app that manages subscribers and USD monthly billing, including totals reporting.
+**Goal:** Fully localize the accounting app frontend to Arabic and ensure the entire UI renders correctly in right-to-left (RTL) layout.
 
 **Planned changes:**
-- Create backend data models and CRUD APIs for subscribers (name, WhatsApp phone, start date, packageId, active status) including deactivate/reactivate behavior.
-- Create backend data model and API for USD-priced packages, pre-seeded with exactly: 1MB = $5/month, 2MB = $10/month.
-- Implement backend monthly billing tracking per subscriber per (year, month) with due/paid status and due amount derived from the subscriber’s package USD price.
-- Add backend reporting endpoints for monthly and yearly totals in USD (based on active subscribers).
-- Build frontend screens to list/search subscribers, add/edit subscriber details, and deactivate/reactivate subscribers with immediate UI updates.
-- Add a one-click “Open WhatsApp” action per subscriber that opens a wa.me link (with validation when missing/invalid).
-- Build a monthly billing screen to select year/month, view active subscribers with package, USD due amount, and toggle paid/unpaid with persistence.
-- Build a totals/reporting dashboard showing monthly and yearly totals in USD and display “TAHA @NET” in the app header.
-- Apply a consistent UI theme (colors/typography/layout) suitable for an internet center billing tool, avoiding blue and purple.
+- Translate all user-visible frontend UI strings to Arabic across authentication screens, navigation, Dashboard, Subscribers, Monthly Billing, dialogs, forms, tables, empty states, buttons, and toast notifications (sonner), focusing on the specified frontend files.
+- Enable and validate RTL support for Arabic by setting appropriate document language/direction and ensuring key layouts (header/nav/sections/dialogs/forms/tables) align and flow correctly without overlap or clipping.
+- Localize month names and date-context labels used in month/year selectors and billing/dashboard headings to Arabic.
 
-**User-visible outcome:** Users can manage subscribers and packages, open WhatsApp chats from subscriber records, track monthly USD dues and paid status per subscriber, and view monthly/yearly USD totals in a themed app labeled “TAHA @NET”.
+**User-visible outcome:** The app displays entirely in Arabic with RTL layout, including Arabic toast messages and Arabic month/date labels, with all pages and dialogs remaining readable and usable.

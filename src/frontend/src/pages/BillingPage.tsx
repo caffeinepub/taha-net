@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -9,28 +12,92 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { useGetAllActiveSubscribers, useGetAllPackages, useGetBillingState, useSetMonthBillingStatus } from '../hooks/useQueries';
+import {
+  useGetAllActiveSubscribers,
+  useGetAllPackages,
+  useGetBillingState,
+  useSetMonthBillingStatus,
+} from '../hooks/useQueries';
 import { formatUSD } from '../lib/money';
 import { toast } from 'sonner';
 import { Calendar } from 'lucide-react';
+import type { Subscriber, Package } from '../backend';
 
 const MONTHS = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
+  { value: 1, label: 'يناير' },
+  { value: 2, label: 'فبراير' },
+  { value: 3, label: 'مارس' },
+  { value: 4, label: 'أبريل' },
+  { value: 5, label: 'مايو' },
+  { value: 6, label: 'يونيو' },
+  { value: 7, label: 'يوليو' },
+  { value: 8, label: 'أغسطس' },
+  { value: 9, label: 'سبتمبر' },
+  { value: 10, label: 'أكتوبر' },
+  { value: 11, label: 'نوفمبر' },
+  { value: 12, label: 'ديسمبر' },
 ];
+
+type BillingRow = {
+  subscriber: Subscriber;
+  package: Package | undefined;
+  due: boolean;
+  paid: boolean;
+};
+
+function SubscriberBillingRow({
+  subscriber,
+  pkg,
+  selectedYear,
+  selectedMonth,
+  onToggleDue,
+  onTogglePaid,
+}: {
+  subscriber: Subscriber;
+  pkg: Package | undefined;
+  selectedYear: number;
+  selectedMonth: number;
+  onToggleDue: (phone: string, currentDue: boolean, currentPaid: boolean) => void;
+  onTogglePaid: (phone: string, currentDue: boolean, currentPaid: boolean) => void;
+}) {
+  const { data: billingState } = useGetBillingState(subscriber.phone);
+
+  const yearBilling = billingState?.find((b) => Number(b.year) === selectedYear);
+  const monthStatus = yearBilling?.months.find((m) => Number(m.month) === selectedMonth);
+
+  const due = monthStatus?.due || false;
+  const paid = monthStatus?.paid || false;
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{subscriber.fullName}</TableCell>
+      <TableCell>{pkg?.name || 'غير معروف'}</TableCell>
+      <TableCell>{pkg ? formatUSD(pkg.priceUsd) : '$0.00'}</TableCell>
+      <TableCell>
+        <Switch
+          checked={due}
+          onCheckedChange={() => onToggleDue(subscriber.phone, due, paid)}
+        />
+      </TableCell>
+      <TableCell>
+        <Switch
+          checked={paid}
+          disabled={!due}
+          onCheckedChange={() => onTogglePaid(subscriber.phone, due, paid)}
+        />
+      </TableCell>
+      <TableCell>
+        {!due ? (
+          <Badge variant="secondary">غير مستحق</Badge>
+        ) : paid ? (
+          <Badge variant="default">مدفوع</Badge>
+        ) : (
+          <Badge variant="destructive">غير مدفوع</Badge>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export function BillingPage() {
   const currentDate = new Date();
@@ -41,19 +108,28 @@ export function BillingPage() {
   const { data: packages = [], isLoading: packagesLoading } = useGetAllPackages();
   const setMonthBillingStatus = useSetMonthBillingStatus();
 
-  const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
-
-  const getPackagePrice = (packageId: bigint): bigint => {
-    const pkg = packages.find((p) => p.id === packageId);
-    return pkg ? pkg.priceUsd : BigInt(0);
+  const handleToggleDue = async (phone: string, currentDue: boolean, currentPaid: boolean) => {
+    try {
+      await setMonthBillingStatus.mutateAsync({
+        phone,
+        year: BigInt(selectedYear),
+        month: BigInt(selectedMonth),
+        due: !currentDue,
+        paid: currentPaid && !currentDue ? false : currentPaid,
+      });
+      toast.success(currentDue ? 'تم إلغاء الاستحقاق' : 'تم تعيين الاستحقاق');
+    } catch (error) {
+      toast.error('فشلت العملية. يرجى المحاولة مرة أخرى.');
+      console.error('Toggle due error:', error);
+    }
   };
 
-  const getPackageName = (packageId: bigint): string => {
-    const pkg = packages.find((p) => p.id === packageId);
-    return pkg ? pkg.name : 'Unknown';
-  };
+  const handleTogglePaid = async (phone: string, currentDue: boolean, currentPaid: boolean) => {
+    if (!currentDue) {
+      toast.error('يجب تعيين الاستحقاق أولاً');
+      return;
+    }
 
-  const handleTogglePaid = async (phone: string, currentPaid: boolean, currentDue: boolean) => {
     try {
       await setMonthBillingStatus.mutateAsync({
         phone,
@@ -62,34 +138,29 @@ export function BillingPage() {
         due: currentDue,
         paid: !currentPaid,
       });
-      toast.success(currentPaid ? 'Marked as unpaid' : 'Marked as paid');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update billing status');
+      toast.success(currentPaid ? 'تم إلغاء الدفع' : 'تم تعيين الدفع');
+    } catch (error) {
+      toast.error('فشلت العملية. يرجى المحاولة مرة أخرى.');
       console.error('Toggle paid error:', error);
     }
   };
 
-  const handleToggleDue = async (phone: string, currentDue: boolean, currentPaid: boolean) => {
-    try {
-      await setMonthBillingStatus.mutateAsync({
-        phone,
-        year: BigInt(selectedYear),
-        month: BigInt(selectedMonth),
-        due: !currentDue,
-        paid: currentPaid,
-      });
-      toast.success(currentDue ? 'Marked as not due' : 'Marked as due');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update billing status');
-      console.error('Toggle due error:', error);
-    }
-  };
+  const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
+
+  if (subscribersLoading || packagesLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Monthly Billing</h2>
-        <p className="text-muted-foreground">Track and manage monthly payments</p>
+        <h2 className="text-3xl font-bold tracking-tight">الفواتير الشهرية</h2>
+        <p className="text-muted-foreground">إدارة حالة الفواتير لكل مشترك</p>
       </div>
 
       {/* Date Selectors */}
@@ -124,88 +195,50 @@ export function BillingPage() {
         </Select>
       </div>
 
+      {/* Billing Table */}
       <Card>
         <CardHeader>
           <CardTitle>
-            Billing for {MONTHS.find((m) => m.value === selectedMonth)?.label} {selectedYear}
+            الفواتير لشهر {MONTHS.find((m) => m.value === selectedMonth)?.label} {selectedYear}
           </CardTitle>
-          <CardDescription>Manage payment status for all active subscribers</CardDescription>
+          <CardDescription>
+            تعيين حالة الاستحقاق والدفع لكل مشترك
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {subscribersLoading || packagesLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : subscribers.length === 0 ? (
+          {subscribers.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
-              No active subscribers found.
+              لا يوجد مشتركون نشطون
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Subscriber</TableHead>
-                    <TableHead>Package</TableHead>
-                    <TableHead>Amount Due</TableHead>
-                    <TableHead>Due</TableHead>
-                    <TableHead>Paid</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {subscribers.map((subscriber) => {
-                    const BillingStateComponent = () => {
-                      const { data: billingState = [] } = useGetBillingState(subscriber.phone);
-                      const yearData = billingState.find((y) => Number(y.year) === selectedYear);
-                      const monthData = yearData?.months.find((m) => Number(m.month) === selectedMonth);
-                      const isDue = monthData?.due ?? false;
-                      const isPaid = monthData?.paid ?? false;
-
-                      return (
-                        <>
-                          <TableCell className="font-medium">{subscriber.fullName}</TableCell>
-                          <TableCell>{getPackageName(subscriber.packageId)}</TableCell>
-                          <TableCell className="font-semibold">
-                            {formatUSD(getPackagePrice(subscriber.packageId))}
-                          </TableCell>
-                          <TableCell>
-                            <Switch
-                              checked={isDue}
-                              onCheckedChange={() => handleToggleDue(subscriber.phone, isDue, isPaid)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Switch
-                              checked={isPaid}
-                              onCheckedChange={() => handleTogglePaid(subscriber.phone, isPaid, isDue)}
-                              disabled={!isDue}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {!isDue ? (
-                              <Badge variant="secondary">Not Due</Badge>
-                            ) : isPaid ? (
-                              <Badge variant="default">Paid</Badge>
-                            ) : (
-                              <Badge variant="destructive">Unpaid</Badge>
-                            )}
-                          </TableCell>
-                        </>
-                      );
-                    };
-
-                    return (
-                      <TableRow key={subscriber.id.toString()}>
-                        <BillingStateComponent />
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الاسم</TableHead>
+                  <TableHead>الباقة</TableHead>
+                  <TableHead>السعر</TableHead>
+                  <TableHead>مستحق</TableHead>
+                  <TableHead>مدفوع</TableHead>
+                  <TableHead>الحالة</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {subscribers.map((subscriber) => {
+                  const pkg = packages.find((p) => p.id === subscriber.packageId);
+                  return (
+                    <SubscriberBillingRow
+                      key={subscriber.id.toString()}
+                      subscriber={subscriber}
+                      pkg={pkg}
+                      selectedYear={selectedYear}
+                      selectedMonth={selectedMonth}
+                      onToggleDue={handleToggleDue}
+                      onTogglePaid={handleTogglePaid}
+                    />
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

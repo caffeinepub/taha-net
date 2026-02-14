@@ -7,18 +7,18 @@ import { formatUSD } from '../lib/money';
 import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 
 const MONTHS = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
+  { value: 1, label: 'يناير' },
+  { value: 2, label: 'فبراير' },
+  { value: 3, label: 'مارس' },
+  { value: 4, label: 'أبريل' },
+  { value: 5, label: 'مايو' },
+  { value: 6, label: 'يونيو' },
+  { value: 7, label: 'يوليو' },
+  { value: 8, label: 'أغسطس' },
+  { value: 9, label: 'سبتمبر' },
+  { value: 10, label: 'أكتوبر' },
+  { value: 11, label: 'نوفمبر' },
+  { value: 12, label: 'ديسمبر' },
 ];
 
 export function DashboardPage() {
@@ -38,8 +38,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">Overview of billing and revenue</p>
+        <h2 className="text-3xl font-bold tracking-tight">لوحة التحكم</h2>
+        <p className="text-muted-foreground">نظرة عامة على الفواتير والإيرادات</p>
       </div>
 
       {/* Date Selectors */}
@@ -78,7 +78,7 @@ export function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Total Due</CardTitle>
+            <CardTitle className="text-sm font-medium">إجمالي المستحقات الشهرية</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -95,7 +95,7 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Yearly Total Due</CardTitle>
+            <CardTitle className="text-sm font-medium">إجمالي المستحقات السنوية</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -104,7 +104,7 @@ export function DashboardPage() {
             ) : (
               <div className="text-2xl font-bold">{formatUSD(yearlyTotal || BigInt(0))}</div>
             )}
-            <p className="text-xs text-muted-foreground">Total for {selectedYear}</p>
+            <p className="text-xs text-muted-foreground">الإجمالي لعام {selectedYear}</p>
           </CardContent>
         </Card>
       </div>
@@ -112,17 +112,15 @@ export function DashboardPage() {
       {/* Info Card */}
       <Card>
         <CardHeader>
-          <CardTitle>About This Dashboard</CardTitle>
-          <CardDescription>Understanding your billing metrics</CardDescription>
+          <CardTitle>حول لوحة التحكم</CardTitle>
+          <CardDescription>فهم مقاييس الفواتير الخاصة بك</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            <strong>Monthly Total Due:</strong> Shows the total amount due from all active subscribers for the
-            selected month (unpaid only).
+            <strong>إجمالي المستحقات الشهرية:</strong> يعرض المبلغ الإجمالي المستحق من جميع المشتركين النشطين للشهر المحدد (غير المدفوع فقط).
           </p>
           <p>
-            <strong>Yearly Total Due:</strong> Shows the total amount due from all active subscribers across all
-            months in the selected year (unpaid only).
+            <strong>إجمالي المستحقات السنوية:</strong> يعرض المبلغ الإجمالي المستحق من جميع المشتركين النشطين عبر جميع أشهر السنة المحددة (غير المدفوع فقط).
           </p>
         </CardContent>
       </Card>

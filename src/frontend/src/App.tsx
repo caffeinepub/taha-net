@@ -70,7 +70,7 @@ export default function App() {
                 }`}
               >
                 <LayoutDashboard className="h-4 w-4" />
-                Dashboard
+                لوحة التحكم
               </button>
               <button
                 onClick={() => setCurrentPage('subscribers')}
@@ -81,7 +81,7 @@ export default function App() {
                 }`}
               >
                 <Users className="h-4 w-4" />
-                Subscribers
+                المشتركون
               </button>
               <button
                 onClick={() => setCurrentPage('billing')}
@@ -92,7 +92,7 @@ export default function App() {
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
-                Monthly Billing
+                الفواتير الشهرية
               </button>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function App() {
         <footer className="mt-16 border-t border-border bg-card/50 py-6">
           <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
             <p>
-              © {new Date().getFullYear()} TAHA @NET. Built with ❤️ using{' '}
+              © {new Date().getFullYear()} TAHA @NET. صُنع بـ ❤️ باستخدام{' '}
               <a
                 href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
                   window.location.hostname

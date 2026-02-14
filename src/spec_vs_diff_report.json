@@ -1,80 +1,44 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T00:00:49.714Z",
-  "summary": "Diff adds a Motoko backend actor with subscriber/package/billing structures plus an Internet Identity–based auth/profile and access-control system. Frontend adds Dashboard, Subscribers, and Billing pages with USD formatting, WhatsApp wa.me helpers, and a charcoal/green theme. Some core requirements appear implemented, but there are signs that inactive subscribers may not be listable/visible as required, and several authentication/access-control features were added beyond the BuildRequest.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Listing subscribers returns all subscribers with their current package and status (including inactive/archived).",
-      "reason": "Frontend queries only `getAllActiveSubscribers()` and there is no evidence in the diff summary of an endpoint/UI path that lists *all* subscribers (active + inactive) with status; this conflicts with the requirement to return all subscribers with status.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts (useGetAllActiveSubscribers calls actor.getAllActiveSubscribers)",
-        "frontend/src/pages/SubscribersPage.tsx (uses useGetAllActiveSubscribers)"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "Deactivated subscribers are visually distinct and excluded from totals by default (implies they can still be viewed/managed in the subscribers UI).",
-      "reason": "The Subscribers UI appears to load only active subscribers, which would prevent showing deactivated subscribers as visually distinct in the list (and prevents reactivation from the list unless there is another view not shown).",
-      "evidence": [
-        "frontend/src/pages/SubscribersPage.tsx (subscribers sourced from useGetAllActiveSubscribers)",
-        "frontend/src/hooks/useQueries.ts (only active-subscribers query shown)"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-14T00:17:41.694Z",
+  "summary": "Diff implements broad Arabic text localization in key UI components/pages, adds RTL document configuration (lang/dir) and basic RTL CSS adjustments, and localizes month names on Dashboard/Billing. It also includes unrelated styling/config changes (Tailwind/design tokens) and other non-localization refactors not explicitly requested.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Access control / authorization system with admin/user permissions and secret-based initialization.",
-      "reason": "BuildRequest did not ask for role-based access control, admin tokens, or authorization gates; it only constrained that if auth is needed later, use Internet Identity. The diff implements an access-control layer and secret token bootstrap.",
+      "description": "Tailwind/design system configuration changes (custom color tokens/fonts/extended utilities) not required for Arabic localization/RTL.",
+      "reason": "BuildRequest only asks for Arabic translation, RTL support, and Arabic month/date labels; it does not request a visual theme redesign or Tailwind configuration updates.",
       "evidence": [
-        "backend/main.mo (imports authorization/MixinAuthorization and authorization/access-control; permission checks for #user/#admin)",
-        "frontend/src/hooks/useActor.ts (reads caffeineAdminToken and calls actor._initializeAccessControlWithSecret)"
+        "frontend-file-summaries.txt (mentions `frontend/tailwind.config.js`: \"custom color tokens, Inter/JetBrains Mono fonts, and extended design system utilities\")"
       ]
     },
     {
-      "description": "User profile system (save/view caller profile with name and phone) and mandatory profile setup flow.",
-      "reason": "The BuildRequest focuses on subscriber/package/billing management; it did not request user profiles or a profile-setup modal gate after login.",
+      "description": "Global color/theme changes in CSS beyond RTL adjustments (OKLCH theme token overhaul for light/dark modes).",
+      "reason": "REQ-2 requires RTL layout support; changing the whole color system/theme is not requested and could be considered scope creep.",
       "evidence": [
-        "backend/main.mo (UserProfile type and get/save profile APIs)",
-        "frontend/src/components/auth/ProfileSetupModal.tsx",
-        "frontend/src/App.tsx (shows ProfileSetupModal when userProfile is null)",
-        "frontend/src/hooks/useQueries.ts (useGetCallerUserProfile/useSaveCallerUserProfile)"
+        "frontend/src/index.css (large changes to CSS variables for light/dark themes in addition to RTL rules)"
       ]
     },
     {
-      "description": "Login gate / authentication-required app shell (AuthGate + LoginButton) rather than allowing unauthenticated usage.",
-      "reason": "Authentication was not a stated requirement for this build; adding mandatory login changes app behavior beyond requested features (though it uses Internet Identity as allowed).",
+      "description": "Non-localization backend query/hooks refactors/changes (`useQueries.ts`), money formatting, and WhatsApp utilities updates not explicitly tied to Arabic localization/RTL.",
+      "reason": "BuildRequest is limited to UI localization/RTL and explicitly states non-goals include new business features; these code areas are not part of the listed AC files for translation and are not evidenced as required for RTL/Arabic text.",
       "evidence": [
-        "frontend/src/components/auth/AuthGate.tsx",
-        "frontend/src/components/auth/LoginButton.tsx",
-        "frontend/src/App.tsx (blocks app when not authenticated)"
+        "frontend-file-summaries.txt (modified: `frontend/src/hooks/useQueries.ts`, `frontend/src/lib/money.ts`, `frontend/src/lib/whatsapp.ts`)"
       ]
     }
   ],
-  "confidence": 0.66,
+  "confidence": 0.68,
   "changed_files": [
-    "all_files_summary.json",
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.css",
     "frontend/index.html",
     "frontend/src/App.tsx",
     "frontend/src/components/auth/AuthGate.tsx",
     "frontend/src/components/auth/LoginButton.tsx",
     "frontend/src/components/auth/ProfileSetupModal.tsx",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
     "frontend/src/index.css",
-    "frontend/src/lib/money.ts",
-    "frontend/src/lib/whatsapp.ts",
-    "frontend/src/main.tsx",
     "frontend/src/pages/BillingPage.tsx",
     "frontend/src/pages/DashboardPage.tsx",
     "frontend/src/pages/SubscribersPage.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

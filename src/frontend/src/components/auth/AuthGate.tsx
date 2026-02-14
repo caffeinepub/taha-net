@@ -14,11 +14,11 @@ export function AuthGate() {
             <span className="text-2xl font-bold">T@N</span>
           </div>
           <CardTitle className="text-2xl">TAHA @NET</CardTitle>
-          <CardDescription>Internet Center Subscriber Management</CardDescription>
+          <CardDescription>نظام إدارة مشتركي مركز الإنترنت</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-sm text-muted-foreground">
-            Please log in to access the subscriber management system.
+            يرجى تسجيل الدخول للوصول إلى نظام إدارة المشتركين.
           </p>
           <Button
             onClick={login}
@@ -26,8 +26,8 @@ export function AuthGate() {
             className="w-full"
             size="lg"
           >
-            <LogIn className="mr-2 h-4 w-4" />
-            {isLoggingIn ? 'Logging in...' : 'Login with Internet Identity'}
+            <LogIn className="ml-2 h-4 w-4" />
+            {isLoggingIn ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
           </Button>
         </CardContent>
       </Card>

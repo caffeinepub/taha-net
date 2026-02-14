@@ -15,20 +15,20 @@ export function ProfileSetupModal() {
     e.preventDefault();
     
     if (!name.trim()) {
-      toast.error('Please enter your name');
+      toast.error('يرجى إدخال اسمك');
       return;
     }
     
     if (!phone.trim()) {
-      toast.error('Please enter your phone number');
+      toast.error('يرجى إدخال رقم هاتفك');
       return;
     }
 
     try {
       await saveProfile.mutateAsync({ name: name.trim(), phone: phone.trim() });
-      toast.success('Profile created successfully!');
+      toast.success('تم إنشاء الملف الشخصي بنجاح!');
     } catch (error) {
-      toast.error('Failed to create profile. Please try again.');
+      toast.error('فشل إنشاء الملف الشخصي. يرجى المحاولة مرة أخرى.');
       console.error('Profile setup error:', error);
     }
   };
@@ -37,33 +37,33 @@ export function ProfileSetupModal() {
     <Dialog open={true}>
       <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Welcome to TAHA @NET</DialogTitle>
+          <DialogTitle>مرحباً بك في TAHA @NET</DialogTitle>
           <DialogDescription>
-            Please set up your profile to continue.
+            يرجى إعداد ملفك الشخصي للمتابعة.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">الاسم الكامل</Label>
             <Input
               id="name"
-              placeholder="Enter your full name"
+              placeholder="أدخل اسمك الكامل"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">رقم الهاتف</Label>
             <Input
               id="phone"
-              placeholder="Enter your phone number"
+              placeholder="أدخل رقم هاتفك"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
           </div>
           <Button type="submit" className="w-full" disabled={saveProfile.isPending}>
-            {saveProfile.isPending ? 'Creating Profile...' : 'Continue'}
+            {saveProfile.isPending ? 'جاري إنشاء الملف الشخصي...' : 'متابعة'}
           </Button>
         </form>
       </DialogContent>

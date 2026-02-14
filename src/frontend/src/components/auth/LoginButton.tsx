@@ -35,13 +35,13 @@ export function LoginButton() {
     >
       {isAuthenticated ? (
         <>
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
+          <LogOut className="ml-2 h-4 w-4" />
+          تسجيل الخروج
         </>
       ) : (
         <>
-          <LogIn className="mr-2 h-4 w-4" />
-          {loginStatus === 'logging-in' ? 'Logging in...' : 'Login'}
+          <LogIn className="ml-2 h-4 w-4" />
+          {loginStatus === 'logging-in' ? 'جاري الدخول...' : 'تسجيل الدخول'}
         </>
       )}
     </Button>

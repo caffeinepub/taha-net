@@ -1,14 +1,15 @@
 {
-  "frontend/src/App.tsx": "Main application component with tab-based navigation between Dashboard, Subscribers, and Billing pages, including authentication gate and profile setup flow.",
+  "frontend/src/App.tsx": "Main application component with Arabic UI text, RTL-adjusted icon spacing, and tab-based navigation between Dashboard, Subscribers, and Billing pages.",
   "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including user profiles, packages, subscribers, billing state, and financial totals with proper cache invalidation.",
   "frontend/src/lib/money.ts": "USD currency formatting utilities using Intl.NumberFormat and bigint conversion helpers for backend operations.",
   "frontend/src/lib/whatsapp.ts": "WhatsApp phone number validation, sanitization, and wa.me URL generation utilities with error handling.",
-  "frontend/src/components/auth/AuthGate.tsx": "Login screen component displayed to unauthenticated users with Internet Identity integration.",
-  "frontend/src/components/auth/ProfileSetupModal.tsx": "Modal dialog for first-time user profile setup requiring name and phone number.",
-  "frontend/src/components/auth/LoginButton.tsx": "Reusable login/logout button component with proper state management and query cache clearing.",
-  "frontend/src/pages/DashboardPage.tsx": "Dashboard page displaying monthly and yearly billing totals with date selectors and summary cards.",
-  "frontend/src/pages/SubscribersPage.tsx": "Subscriber management page with searchable table, add/edit dialog, WhatsApp integration, and activate/deactivate functionality.",
-  "frontend/src/pages/BillingPage.tsx": "Monthly billing page showing all subscribers with due/paid status toggles and package pricing for selected month/year.",
-  "frontend/src/index.css": "Global styles with OKLCH color system using professional charcoal and forest green theme for both light and dark modes.",
-  "frontend/tailwind.config.js": "Tailwind configuration with custom color tokens, Inter/JetBrains Mono fonts, and extended design system utilities."
+  "frontend/src/components/auth/AuthGate.tsx": "Login screen component with Arabic text and RTL-adjusted icon positioning for unauthenticated users.",
+  "frontend/src/components/auth/ProfileSetupModal.tsx": "Profile setup modal with Arabic labels, placeholders, and toast messages for first-time users.",
+  "frontend/src/components/auth/LoginButton.tsx": "Reusable login/logout button with Arabic labels and RTL icon spacing.",
+  "frontend/src/pages/DashboardPage.tsx": "Dashboard page with Arabic month names, labels, and descriptions displaying monthly and yearly billing totals.",
+  "frontend/src/pages/SubscribersPage.tsx": "Subscriber management page with Arabic UI text, RTL-adjusted search input, and fully localized table, dialogs, and toast messages.",
+  "frontend/src/pages/BillingPage.tsx": "Monthly billing page with Arabic UI that extracts billing row logic into a separate component to comply with React Hooks rules, displaying billing status management for each subscriber.",
+  "frontend/src/index.css": "Global styles with OKLCH color system and RTL-specific adjustments for proper text alignment and direction in Arabic.",
+  "frontend/tailwind.config.js": "Tailwind configuration with custom color tokens, Inter/JetBrains Mono fonts, and extended design system utilities.",
+  "frontend/index.html": "HTML entry point configured for Arabic language (lang=\"ar\") and RTL direction (dir=\"rtl\")."
 }

@@ -88,8 +88,18 @@ export function SubscribersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.packageId) {
-      toast.error('Please fill in all required fields');
+    if (!formData.fullName.trim()) {
+      toast.error('يرجى إدخال الاسم الكامل');
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      toast.error('يرجى إدخال رقم الهاتف');
+      return;
+    }
+
+    if (!formData.packageId) {
+      toast.error('يرجى اختيار باقة');
       return;
     }
 
@@ -101,23 +111,21 @@ export function SubscribersPage() {
           packageId: BigInt(formData.packageId),
           active: editingSubscriber.active,
         });
-        toast.success('Subscriber updated successfully');
+        toast.success('تم تحديث المشترك بنجاح');
       } else {
-        const dateMs = new Date(formData.subscriptionStartDate).getTime();
-        const dateNs = BigInt(dateMs) * BigInt(1000000);
-
+        const startDate = new Date(formData.subscriptionStartDate).getTime() * 1000000;
         await createSubscriber.mutateAsync({
           fullName: formData.fullName.trim(),
           phone: formData.phone.trim(),
           packageId: BigInt(formData.packageId),
-          subscriptionStartDate: dateNs,
+          subscriptionStartDate: BigInt(startDate),
         });
-        toast.success('Subscriber created successfully');
+        toast.success('تم إضافة المشترك بنجاح');
       }
       handleCloseDialog();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save subscriber');
-      console.error('Save subscriber error:', error);
+    } catch (error) {
+      toast.error('فشلت العملية. يرجى المحاولة مرة أخرى.');
+      console.error('Subscriber operation error:', error);
     }
   };
 
@@ -129,138 +137,137 @@ export function SubscribersPage() {
         packageId: subscriber.packageId,
         active: !subscriber.active,
       });
-      toast.success(subscriber.active ? 'Subscriber deactivated' : 'Subscriber reactivated');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update subscriber status');
+      toast.success(subscriber.active ? 'تم إلغاء تفعيل المشترك' : 'تم تفعيل المشترك');
+    } catch (error) {
+      toast.error('فشلت العملية. يرجى المحاولة مرة أخرى.');
       console.error('Toggle active error:', error);
     }
   };
 
-  const handleWhatsAppClick = (phone: string) => {
+  const handleWhatsApp = (phone: string) => {
     if (!isValidWhatsAppPhone(phone)) {
-      toast.error('Invalid phone number for WhatsApp');
+      toast.error('رقم الهاتف غير صالح لـ WhatsApp');
       return;
     }
-    try {
-      openWhatsAppChat(phone);
-    } catch (error) {
-      toast.error('Failed to open WhatsApp');
-    }
+    openWhatsAppChat(phone);
   };
 
-  const getPackageName = (packageId: bigint): string => {
+  const getPackageName = (packageId: bigint) => {
     const pkg = packages.find((p) => p.id === packageId);
-    return pkg ? pkg.name : 'Unknown';
+    return pkg ? pkg.name : 'غير معروف';
   };
 
-  const getPackagePrice = (packageId: bigint): bigint => {
+  const getPackagePrice = (packageId: bigint) => {
     const pkg = packages.find((p) => p.id === packageId);
-    return pkg ? pkg.priceUsd : BigInt(0);
+    return pkg ? formatUSD(pkg.priceUsd) : '$0.00';
   };
+
+  if (subscribersLoading || packagesLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Subscribers</h2>
-          <p className="text-muted-foreground">Manage your internet subscribers</p>
+          <h2 className="text-3xl font-bold tracking-tight">المشتركون</h2>
+          <p className="text-muted-foreground">إدارة مشتركي مركز الإنترنت</p>
         </div>
         <Button onClick={() => handleOpenDialog()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Subscriber
+          <Plus className="ml-2 h-4 w-4" />
+          إضافة مشترك
         </Button>
       </div>
 
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="البحث بالاسم أو رقم الهاتف..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pr-10"
+        />
+      </div>
+
+      {/* Subscribers Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Active Subscribers</CardTitle>
-          <CardDescription>View and manage all active subscribers</CardDescription>
+          <CardTitle>المشتركون النشطون</CardTitle>
+          <CardDescription>قائمة بجميع المشتركين النشطين</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          {subscribersLoading || packagesLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : filteredSubscribers.length === 0 ? (
+          {filteredSubscribers.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
-              {searchQuery ? 'No subscribers found matching your search.' : 'No subscribers yet. Add your first subscriber to get started.'}
+              {searchQuery ? 'لم يتم العثور على مشتركين' : 'لا يوجد مشتركون بعد'}
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Package</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الاسم الكامل</TableHead>
+                  <TableHead>رقم الهاتف</TableHead>
+                  <TableHead>الباقة</TableHead>
+                  <TableHead>السعر</TableHead>
+                  <TableHead>الحالة</TableHead>
+                  <TableHead className="text-left">الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredSubscribers.map((subscriber) => (
+                  <TableRow key={subscriber.id.toString()}>
+                    <TableCell className="font-medium">{subscriber.fullName}</TableCell>
+                    <TableCell className="font-mono">{subscriber.phone}</TableCell>
+                    <TableCell>{getPackageName(subscriber.packageId)}</TableCell>
+                    <TableCell>{getPackagePrice(subscriber.packageId)}</TableCell>
+                    <TableCell>
+                      {subscriber.active ? (
+                        <Badge variant="default">نشط</Badge>
+                      ) : (
+                        <Badge variant="secondary">غير نشط</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-start gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(subscriber)}
+                          title="تعديل"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleWhatsApp(subscriber.phone)}
+                          title="فتح WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleActive(subscriber)}
+                          title={subscriber.active ? 'إلغاء التفعيل' : 'تفعيل'}
+                        >
+                          {subscriber.active ? (
+                            <UserX className="h-4 w-4" />
+                          ) : (
+                            <UserCheck className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSubscribers.map((subscriber) => (
-                    <TableRow key={subscriber.id.toString()}>
-                      <TableCell className="font-medium">{subscriber.fullName}</TableCell>
-                      <TableCell>{subscriber.phone}</TableCell>
-                      <TableCell>{getPackageName(subscriber.packageId)}</TableCell>
-                      <TableCell>{formatUSD(getPackagePrice(subscriber.packageId))}</TableCell>
-                      <TableCell>
-                        <Badge variant={subscriber.active ? 'default' : 'secondary'}>
-                          {subscriber.active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleWhatsAppClick(subscriber.phone)}
-                            title="Open WhatsApp"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(subscriber)}
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleToggleActive(subscriber)}
-                            title={subscriber.active ? 'Deactivate' : 'Reactivate'}
-                          >
-                            {subscriber.active ? (
-                              <UserX className="h-4 w-4" />
-                            ) : (
-                              <UserCheck className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -269,79 +276,81 @@ export function SubscribersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingSubscriber ? 'Edit Subscriber' : 'Add New Subscriber'}</DialogTitle>
+            <DialogTitle>{editingSubscriber ? 'تعديل المشترك' : 'إضافة مشترك جديد'}</DialogTitle>
             <DialogDescription>
               {editingSubscriber
-                ? 'Update subscriber information'
-                : 'Enter the details for the new subscriber'}
+                ? 'تحديث معلومات المشترك'
+                : 'أدخل معلومات المشترك الجديد'}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Enter full name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Enter phone number"
-                  disabled={!!editingSubscriber}
-                />
-                {editingSubscriber && (
-                  <p className="text-xs text-muted-foreground">Phone number cannot be changed</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="packageId">Package *</Label>
-                <Select
-                  value={formData.packageId}
-                  onValueChange={(value) => setFormData({ ...formData, packageId: value })}
-                >
-                  <SelectTrigger id="packageId">
-                    <SelectValue placeholder="Select a package" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {packages.map((pkg) => (
-                      <SelectItem key={pkg.id.toString()} value={pkg.id.toString()}>
-                        {pkg.name} - {formatUSD(pkg.priceUsd)}/month
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {!editingSubscriber && (
-                <div className="space-y-2">
-                  <Label htmlFor="subscriptionStartDate">Subscription Start Date *</Label>
-                  <Input
-                    id="subscriptionStartDate"
-                    type="date"
-                    value={formData.subscriptionStartDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, subscriptionStartDate: e.target.value })
-                    }
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">الاسم الكامل</Label>
+              <Input
+                id="fullName"
+                placeholder="أدخل الاسم الكامل"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">رقم الهاتف</Label>
+              <Input
+                id="phone"
+                placeholder="أدخل رقم الهاتف"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                disabled={!!editingSubscriber}
+              />
+              {editingSubscriber && (
+                <p className="text-xs text-muted-foreground">لا يمكن تغيير رقم الهاتف</p>
               )}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="packageId">الباقة</Label>
+              <Select
+                value={formData.packageId}
+                onValueChange={(value) => setFormData({ ...formData, packageId: value })}
+              >
+                <SelectTrigger id="packageId">
+                  <SelectValue placeholder="اختر باقة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {packages.map((pkg) => (
+                    <SelectItem key={pkg.id.toString()} value={pkg.id.toString()}>
+                      {pkg.name} - {formatUSD(pkg.priceUsd)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {!editingSubscriber && (
+              <div className="space-y-2">
+                <Label htmlFor="subscriptionStartDate">تاريخ بدء الاشتراك</Label>
+                <Input
+                  id="subscriptionStartDate"
+                  type="date"
+                  value={formData.subscriptionStartDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, subscriptionStartDate: e.target.value })
+                  }
+                />
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                Cancel
+                إلغاء
               </Button>
-              <Button type="submit" disabled={createSubscriber.isPending || updateSubscriber.isPending}>
+              <Button
+                type="submit"
+                disabled={createSubscriber.isPending || updateSubscriber.isPending}
+              >
                 {createSubscriber.isPending || updateSubscriber.isPending
-                  ? 'Saving...'
+                  ? 'جاري الحفظ...'
                   : editingSubscriber
-                  ? 'Update'
-                  : 'Create'}
+                  ? 'تحديث'
+                  : 'إضافة'}
               </Button>
             </DialogFooter>
           </form>
