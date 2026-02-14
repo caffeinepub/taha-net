@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useGetTotalDueForMonth, useGetTotalDueForYear } from '../hooks/useQueries';
-import { formatUSD } from '../lib/money';
-import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DollarSign, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 
 const MONTHS = [
   { value: 1, label: 'يناير' },
@@ -25,13 +23,6 @@ export function DashboardPage() {
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-
-  const { data: monthlyTotal, isLoading: monthlyLoading } = useGetTotalDueForMonth(
-    BigInt(selectedYear),
-    BigInt(selectedMonth)
-  );
-
-  const { data: yearlyTotal, isLoading: yearlyLoading } = useGetTotalDueForYear(BigInt(selectedYear));
 
   const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
 
@@ -74,6 +65,14 @@ export function DashboardPage() {
         </Select>
       </div>
 
+      {/* Info Alert */}
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          بيانات الفواتير غير متاحة حاليًا. يتطلب ذلك تنفيذ وظائف إضافية في الخادم الخلفي.
+        </AlertDescription>
+      </Alert>
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -82,11 +81,7 @@ export function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {monthlyLoading ? (
-              <Skeleton className="h-8 w-32" />
-            ) : (
-              <div className="text-2xl font-bold">{formatUSD(monthlyTotal || BigInt(0))}</div>
-            )}
+            <div className="text-2xl font-bold">$0.00</div>
             <p className="text-xs text-muted-foreground">
               {MONTHS.find((m) => m.value === selectedMonth)?.label} {selectedYear}
             </p>
@@ -99,11 +94,7 @@ export function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {yearlyLoading ? (
-              <Skeleton className="h-8 w-32" />
-            ) : (
-              <div className="text-2xl font-bold">{formatUSD(yearlyTotal || BigInt(0))}</div>
-            )}
+            <div className="text-2xl font-bold">$0.00</div>
             <p className="text-xs text-muted-foreground">الإجمالي لعام {selectedYear}</p>
           </CardContent>
         </Card>
@@ -121,6 +112,9 @@ export function DashboardPage() {
           </p>
           <p>
             <strong>إجمالي المستحقات السنوية:</strong> يعرض المبلغ الإجمالي المستحق من جميع المشتركين النشطين عبر جميع أشهر السنة المحددة (غير المدفوع فقط).
+          </p>
+          <p className="pt-2 text-amber-600">
+            <strong>ملاحظة:</strong> وظائف الفواتير والمستحقات تتطلب تنفيذ إضافي في الخادم الخلفي.
           </p>
         </CardContent>
       </Card>

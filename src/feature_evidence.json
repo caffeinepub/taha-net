@@ -2,41 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-translate-all-user-visible-ui-text-in-the-frontend-to-arabic-across-the-entire-app-including-authentication-screens-navigation-pages-dashboard-subscribers-monthly-billing-dialogs-form-labels-placeholders-table-headers-empty-states-button-labels-and-toast-notifications",
-      "featureTitle": "Translate all user-visible UI text in the frontend to Arabic across the entire app, including authentication screens, navigation, pages (Dashboard, Subscribers, Monthly Billing), dialogs, form labels/placeholders, table headers, empty states, button labels, and toast notifications.",
+      "featureId": "feature-expose-the-new-backend-bulk-delete-api-in-the-frontend-data-layer-by-adding-a-react-query-mutation-hook-that-calls-the-backend-method-and-invalidates-all-affected-queries-at-minimum-subscribers-all-billing-queries-and-totals-queries",
+      "featureTitle": "Expose the new backend bulk-delete API in the frontend data layer by adding a React Query mutation hook that calls the backend method and invalidates all affected queries (at minimum: ['subscribers'], all ['billing', *] queries, and ['totals', *] queries).",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/auth/AuthGate.tsx",
-        "frontend/src/components/auth/LoginButton.tsx",
-        "frontend/src/components/auth/ProfileSetupModal.tsx",
-        "frontend/src/pages/BillingPage.tsx",
-        "frontend/src/pages/DashboardPage.tsx",
-        "frontend/src/pages/SubscribersPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-right-to-left-rtl-layout-support-for-arabic-including-setting-the-document-language-direction-appropriately-and-ensuring-main-app-layouts-header-nav-forms-tables-dialogs-render-correctly-in-rtl",
-      "featureTitle": "Add right-to-left (RTL) layout support for Arabic, including setting the document language/direction appropriately and ensuring main app layouts (header, nav, forms, tables, dialogs) render correctly in RTL.",
-      "files": [
-        "frontend/index.html",
-        "frontend/src/App.tsx",
-        "frontend/src/components/auth/AuthGate.tsx",
-        "frontend/src/components/auth/LoginButton.tsx",
-        "frontend/src/index.css",
-        "frontend/src/pages/BillingPage.tsx",
-        "frontend/src/pages/SubscribersPage.tsx"
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -52,11 +21,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-localize-month-names-and-any-date-related-labels-shown-in-month-year-selectors-and-billing-headings-to-arabic",
-      "featureTitle": "Localize month names and any date-related labels shown in month/year selectors and billing headings to Arabic.",
+      "featureId": "feature-add-an-admin-only-ui-control-on-the-subscribers-page-to-delete-all-subscribers-the-ui-must-1-be-visible-only-to-admins-2-show-a-confirmation-dialog-describing-that-the-action-is-irreversible-and-will-delete-subscribers-and-billing-data-and-3-on-confirm-call-the-new-mutation-show-success-error-feedback-and-disable-the-confirm-button-while-the-request-is-in-progress",
+      "featureTitle": "Add an admin-only UI control on the Subscribers page to delete all subscribers. The UI must (1) be visible only to admins, (2) show a confirmation dialog describing that the action is irreversible and will delete subscribers and billing data, and (3) on confirm, call the new mutation, show success/error feedback, and disable the confirm button while the request is in progress.",
       "files": [
-        "frontend/src/pages/BillingPage.tsx",
-        "frontend/src/pages/DashboardPage.tsx"
+        "frontend/src/pages/SubscribersPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",

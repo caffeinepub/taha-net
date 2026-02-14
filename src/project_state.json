@@ -1,32 +1,22 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Accounting application (v1 draft deployed) with planned improvements; user requests full Arabic language support across the entire app.",
-  "architectural_notes": [
-    "Plan for full localization/i18n support with Arabic (RTL) across UI, field labels, invoices, and reports."
-  ],
+  "summary": "New project",
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-translate-all-user-visible-ui-text-in-the-frontend-to-arabic-across-the-entire-app-including-authentication-screens-navigation-pages-dashboard-subscribers-monthly-billing-dialogs-form-labels-placeholders-table-headers-empty-states-button-labels-and-toast-notifications",
-      "title": "Translate all user-visible UI text in the frontend to Arabic across the entire app, including authentication screens, navigation, pages (Dashboard, Subscribers, Monthly Billing), dialogs, form labels/placeholders, table headers, empty states, button labels, and toast notifications.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-right-to-left-rtl-layout-support-for-arabic-including-setting-the-document-language-direction-appropriately-and-ensuring-main-app-layouts-header-nav-forms-tables-dialogs-render-correctly-in-rtl",
-      "title": "Add right-to-left (RTL) layout support for Arabic, including setting the document language/direction appropriately and ensuring main app layouts (header, nav, forms, tables, dialogs) render correctly in RTL.",
+      "id": "feature-expose-the-new-backend-bulk-delete-api-in-the-frontend-data-layer-by-adding-a-react-query-mutation-hook-that-calls-the-backend-method-and-invalidates-all-affected-queries-at-minimum-subscribers-all-billing-queries-and-totals-queries",
+      "title": "Expose the new backend bulk-delete API in the frontend data layer by adding a React Query mutation hook that calls the backend method and invalidates all affected queries (at minimum: ['subscribers'], all ['billing', *] queries, and ['totals', *] queries).",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-localize-month-names-and-any-date-related-labels-shown-in-month-year-selectors-and-billing-headings-to-arabic",
-      "title": "Localize month names and any date-related labels shown in month/year selectors and billing headings to Arabic.",
+      "id": "feature-add-an-admin-only-ui-control-on-the-subscribers-page-to-delete-all-subscribers-the-ui-must-1-be-visible-only-to-admins-2-show-a-confirmation-dialog-describing-that-the-action-is-irreversible-and-will-delete-subscribers-and-billing-data-and-3-on-confirm-call-the-new-mutation-show-success-error-feedback-and-disable-the-confirm-button-while-the-request-is-in-progress",
+      "title": "Add an admin-only UI control on the Subscribers page to delete all subscribers. The UI must (1) be visible only to admins, (2) show a confirmation dialog describing that the action is irreversible and will delete subscribers and billing data, and (3) on confirm, call the new mutation, show success/error feedback, and disable the confirm button while the request is in progress.",
       "reqIds": [
         "REQ-3"
       ],
@@ -36,12 +26,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Full Arabic localization of the entire app UI (fields, invoices, reports)",
+      "summary": "Ability to delete all subscribers (bulk removal)",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add an admin-only backend API to delete all subscribers and all subscriber-related derived state (including active subscriber set, phone-to-subscriber lookup, and all billing state keyed by subscriber). The API must return a summary count of how many subscriber records were removed.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Full Arabic localization (RTL) across the accounting app UI",
+  "projectName": "Add admin-only 'Delete all subscribers' bulk removal",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

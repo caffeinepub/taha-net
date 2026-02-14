@@ -1,69 +1,79 @@
 {
   "kind": "build_request",
-  "title": "Full Arabic localization (RTL) across the accounting app UI",
+  "title": "Add admin-only 'Delete all subscribers' bulk removal",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Translate all user-visible UI text in the frontend to Arabic across the entire app, including authentication screens, navigation, pages (Dashboard, Subscribers, Monthly Billing), dialogs, form labels/placeholders, table headers, empty states, button labels, and toast notifications.",
-      "target": "frontend",
+      "text": "Add an admin-only backend API to delete all subscribers and all subscriber-related derived state (including active subscriber set, phone-to-subscriber lookup, and all billing state keyed by subscriber). The API must return a summary count of how many subscriber records were removed.",
+      "target": "backend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "كامل في اللغة العربية"
+          "حذف الكل مشتركين"
         ]
       },
       "acceptanceCriteria": [
-        "All currently English UI strings in these files are replaced with Arabic equivalents: frontend/src/App.tsx, frontend/src/components/auth/AuthGate.tsx, frontend/src/components/auth/LoginButton.tsx, frontend/src/components/auth/ProfileSetupModal.tsx, frontend/src/pages/DashboardPage.tsx, frontend/src/pages/SubscribersPage.tsx, frontend/src/pages/BillingPage.tsx.",
-        "All toast messages shown via sonner are displayed in Arabic (e.g., validation errors, success/failure states).",
-        "No mixed-language labels remain in navigation tabs, headings, descriptions, table headers, dialog titles/descriptions, form labels, placeholders, and action button text."
+        "Calling the new method as an admin removes all entries from the subscribers collection.",
+        "After deletion, getAllActiveSubscribers() returns an empty array.",
+        "After deletion, getTotalDueForMonth(year, month) returns 0 for any inputs.",
+        "After deletion, getTotalDueForYear(year) returns 0 for any inputs.",
+        "After deletion, getBillingState(phone) returns [] for any phone.",
+        "Non-admin callers are rejected with an Unauthorized trap consistent with existing admin-only APIs.",
+        "The method returns the number of subscribers deleted (0 is valid when already empty)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add right-to-left (RTL) layout support for Arabic, including setting the document language/direction appropriately and ensuring main app layouts (header, nav, forms, tables, dialogs) render correctly in RTL.",
+      "text": "Expose the new backend bulk-delete API in the frontend data layer by adding a React Query mutation hook that calls the backend method and invalidates all affected queries (at minimum: ['subscribers'], all ['billing', *] queries, and ['totals', *] queries).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "كامل في اللغة العربية"
+          "حذف الكل مشتركين"
         ]
       },
       "acceptanceCriteria": [
-        "The root HTML document is updated so the app is configured for Arabic (e.g., lang=\"ar\") and RTL direction (e.g., dir=\"rtl\") without breaking React mounting.",
-        "Primary layout areas (header, top navigation, page sections, dialogs) visually align and flow RTL; spacing/icons do not overlap text and remain readable.",
-        "Form inputs, placeholders, and table content remain usable and visually consistent in RTL (no clipped labels, misaligned controls, or broken modal layouts)."
+        "A new React Query mutation hook exists in frontend/src/hooks/useQueries.ts for deleting all subscribers.",
+        "On successful mutation, the subscribers list refetches and displays no rows.",
+        "On successful mutation, totals and billing-dependent UI refetches (no stale totals).",
+        "Errors from the backend are surfaced to the caller as a rejected mutation (so the UI can toast/display the error)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Localize month names and any date-related labels shown in month/year selectors and billing headings to Arabic.",
+      "text": "Add an admin-only UI control on the Subscribers page to delete all subscribers. The UI must (1) be visible only to admins, (2) show a confirmation dialog describing that the action is irreversible and will delete subscribers and billing data, and (3) on confirm, call the new mutation, show success/error feedback, and disable the confirm button while the request is in progress.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "كامل في اللغة العربية"
+          "حذف الكل مشتركين"
         ]
       },
       "acceptanceCriteria": [
-        "Month selector options in Dashboard and Monthly Billing pages display Arabic month names instead of English (replacing the current MONTHS label values).",
-        "The Monthly Billing card title (e.g., \"Billing for ...\") and similar date-context labels on the Dashboard page are displayed in Arabic."
+        "When logged in as an admin, a 'Delete all subscribers' action is available on the Subscribers page (frontend/src/pages/SubscribersPage.tsx).",
+        "When logged in as a non-admin, the delete-all action is not shown.",
+        "Clicking the action opens a confirmation dialog; cancelling closes the dialog without changes.",
+        "Confirming triggers the delete-all mutation and disables the confirm button while pending.",
+        "On success, the subscribers table shows the empty state, and a success toast/message is shown.",
+        "On failure (including Unauthorized), an error toast/message is shown and no UI state is incorrectly cleared client-side."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files in frontend/src/components/ui (these paths are immutable).",
-    "Keep the backend as a single Motoko actor in backend/main.mo; do not introduce additional backend services."
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "Do not edit files under frontend/immutablePaths (e.g., frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*). Compose existing UI components instead."
   ],
   "nonGoals": [
-    "Adding new business features (e.g., new billing flows, invoices generation, reporting modules) beyond translating/localizing the existing UI.",
-    "Changing backend data models or stored data solely for localization purposes."
+    "Do not add per-subscriber multi-select deletion or filtering-based deletion.",
+    "Do not add an undo/restore feature for deleted subscribers.",
+    "Do not change authentication/authorization model beyond reusing existing admin checks."
   ],
   "imageRequirements": {
     "required": [],

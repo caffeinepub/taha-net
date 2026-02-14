@@ -10,10 +10,17 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface BillingEntryView {
-  'year' : bigint,
-  'months' : Array<{ 'due' : boolean, 'month' : bigint, 'paid' : boolean }>,
+export interface BulkImportInput {
+  'names' : string,
+  'subscriptionStartDate' : Time,
+  'packageId' : bigint,
 }
+export interface BulkImportResult {
+  'result' : [] | [Subscriber],
+  'name' : string,
+  'error' : [] | [string],
+}
+export interface DeleteAllSubscribersResult { 'subscribersDeleted' : bigint }
 export interface Package { 'id' : bigint, 'name' : string, 'priceUsd' : bigint }
 export interface Subscriber {
   'id' : bigint,
@@ -31,33 +38,20 @@ export type UserRole = { 'admin' : null } |
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'bulkCreateSubscribers' : ActorMethod<
+    [BulkImportInput],
+    Array<BulkImportResult>
+  >,
   'createPackage' : ActorMethod<[string, bigint], Package>,
-  'createSubscriber' : ActorMethod<[string, string, bigint, Time], Subscriber>,
-  'getAllActiveSubscribers' : ActorMethod<[], Array<Subscriber>>,
+  'deleteAllSubscribers' : ActorMethod<[], DeleteAllSubscribersResult>,
   'getAllPackages' : ActorMethod<[], Array<Package>>,
-  'getBillingState' : ActorMethod<[string], Array<BillingEntryView>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getPackage' : ActorMethod<[bigint], Package>,
-  'getSubscriber' : ActorMethod<[string], Subscriber>,
-  'getSubscriberBillingSummary' : ActorMethod<
-    [string],
-    { 'totalOutstanding' : bigint, 'totalPaid' : bigint, 'totalDue' : bigint }
-  >,
-  'getTotalDueForMonth' : ActorMethod<[bigint, bigint], bigint>,
-  'getTotalDueForYear' : ActorMethod<[bigint], bigint>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'setMonthBillingStatus' : ActorMethod<
-    [string, bigint, bigint, boolean, boolean],
-    undefined
-  >,
   'updatePackage' : ActorMethod<[bigint, string, bigint], Package>,
-  'updateSubscriber' : ActorMethod<
-    [string, string, bigint, boolean],
-    Subscriber
-  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

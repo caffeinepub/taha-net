@@ -1,14 +1,12 @@
 import Map "mo:core/Map";
 import Set "mo:core/Set";
 import List "mo:core/List";
-import Runtime "mo:core/Runtime";
-import Time "mo:core/Time";
 import Text "mo:core/Text";
+import Time "mo:core/Time";
 import Nat "mo:core/Nat";
-import Iter "mo:core/Iter";
-import Order "mo:core/Order";
-import Principal "mo:core/Principal";
 import Array "mo:core/Array";
+import Runtime "mo:core/Runtime";
+import Principal "mo:core/Principal";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
@@ -87,14 +85,13 @@ actor {
     status : ?MonthStatus;
   };
 
-  let globalPackages = Map.empty<Nat, Package>();
+  // Subscriber data structures
   let subscribers = Map.empty<Nat, Subscriber>();
+  let activeSubscribers = Set.empty<Nat>();
+  let phoneToSubscriberId = Map.empty<Text, Nat>();
   let billingStates = Map.empty<Nat, YearlyBilling>();
 
-  let activeSubscribers = Set.empty<Nat>();
-
-  // Map phone numbers to subscriber IDs for quick lookup
-  let phoneToSubscriberId = Map.empty<Text, Nat>();
+  let globalPackages = Map.empty<Nat, Package>();
 
   // Init with default packages
   var nextPackageId = 1;
@@ -161,317 +158,86 @@ actor {
     };
   };
 
-  // Subscribers - Admin-only operations
-  public query ({ caller }) func getAllActiveSubscribers() : async [Subscriber] {
+  public type BulkImportInput = {
+    names : Text;
+    packageId : Nat;
+    subscriptionStartDate : Time.Time;
+  };
+
+  public shared ({ caller }) func bulkCreateSubscribers(
+    input : BulkImportInput
+  ) : async [BulkImportResult] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view all subscribers");
+      Runtime.trap("Unauthorized: Only admins can create subscribers");
     };
 
-    let results = List.empty<Subscriber>();
-    for (id in activeSubscribers.values()) {
-      switch (subscribers.get(id)) {
-        case (?subscriber) {
-          results.add(subscriber);
+    let lines = input.names.split(#char('\n'));
+    let results = List.empty<BulkImportResult>();
+
+    for (name in lines) {
+      let trimmed = name.trim(#char(' '));
+      if (trimmed.size() > 0) {
+        // Check if the name is valid (non-empty)
+        if (trimmed.size() <= 0) {
+          results.add({
+            name = trimmed;
+            result = null;
+            error = ?"Invalid Name: Full name cannot be empty";
+          });
+        } else {
+          let placeholderPhone = "placeholder-" # nextSubscriberId.toText();
+          let subscriber = {
+            id = nextSubscriberId;
+            fullName = trimmed;
+            phone = placeholderPhone;
+            packageId = input.packageId;
+            active = true;
+            subscriptionStartDate = input.subscriptionStartDate;
+          };
+          
+          subscribers.add(nextSubscriberId, subscriber);
+          activeSubscribers.add(nextSubscriberId);
+          phoneToSubscriberId.add(placeholderPhone, nextSubscriberId);
+          
+          results.add({
+            name = trimmed;
+            result = ?subscriber;
+            error = null;
+          });
+          nextSubscriberId += 1;
         };
-        case (null) {};
       };
     };
     results.toArray();
   };
 
-  public query ({ caller }) func getSubscriber(phone : Text) : async Subscriber {
-    // Users can only view their own subscriber record
-    let callerProfile = userProfiles.get(caller);
-    let isOwnRecord = switch (callerProfile) {
-      case (?profile) { profile.phone == phone };
-      case (null) { false };
-    };
-
-    if (not isOwnRecord and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own subscriber record");
-    };
-
-    switch (phoneToSubscriberId.get(phone)) {
-      case (?id) {
-        switch (subscribers.get(id)) {
-          case (?subscriber) { subscriber };
-          case (null) { Runtime.trap("Subscriber not found") };
-        };
-      };
-      case (null) { Runtime.trap("Subscriber not found with phone: '" # phone # "'") };
-    };
+  public type BulkImportResult = {
+    result : ?Subscriber;
+    name : Text;
+    error : ?Text;
   };
 
-  public shared ({ caller }) func createSubscriber(
-    fullName : Text,
-    phone : Text,
-    packageId : Nat,
-    subscriptionStartDate : Time.Time
-  ) : async Subscriber {
+  // Admin-only: Delete all subscribers and related state
+  public type DeleteAllSubscribersResult = {
+    subscribersDeleted : Nat;
+  };
+
+  public shared ({ caller }) func deleteAllSubscribers() : async DeleteAllSubscribersResult {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can create subscribers");
+      Runtime.trap("Unauthorized: Only admins can delete all subscribers");
     };
 
-    // Verify package exists
-    switch (globalPackages.get(packageId)) {
-      case (null) { Runtime.trap("Package not found") };
-      case (?_) {};
-    };
+    // Count subscribers before deletion
+    let count = subscribers.size();
 
-    let id = nextSubscriberId;
-    nextSubscriberId += 1;
-    let subscriber = {
-      id;
-      fullName;
-      phone;
-      packageId;
-      active = true;
-      subscriptionStartDate;
-    };
+    // Clear all subscriber-related data structures
+    subscribers.clear();
+    activeSubscribers.clear();
+    phoneToSubscriberId.clear();
+    billingStates.clear();
 
-    subscribers.add(id, subscriber);
-    phoneToSubscriberId.add(phone, id);
-    activeSubscribers.add(id);
-    subscriber;
-  };
-
-  public shared ({ caller }) func updateSubscriber(
-    phone : Text,
-    fullName : Text,
-    packageId : Nat,
-    active : Bool
-  ) : async Subscriber {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can update subscribers");
-    };
-
-    switch (phoneToSubscriberId.get(phone)) {
-      case (?id) {
-        switch (subscribers.get(id)) {
-          case (?oldSubscriber) {
-            let subscriber = {
-              id;
-              fullName;
-              phone;
-              packageId;
-              active;
-              subscriptionStartDate = oldSubscriber.subscriptionStartDate;
-            };
-            subscribers.add(id, subscriber);
-            if (active) {
-              activeSubscribers.add(id);
-            } else {
-              activeSubscribers.remove(id);
-            };
-            subscriber;
-          };
-          case (null) { Runtime.trap("Subscriber not found") };
-        };
-      };
-      case (null) { Runtime.trap("Subscriber not found with phone: '" # phone # "'") };
-    };
-  };
-
-  // Billing - Users can view own billing, admins can view all
-  public query ({ caller }) func getBillingState(phone : Text) : async [BillingEntryView] {
-    // Users can only view their own billing
-    let callerProfile = userProfiles.get(caller);
-    let isOwnRecord = switch (callerProfile) {
-      case (?profile) { profile.phone == phone };
-      case (null) { false };
-    };
-
-    if (not isOwnRecord and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own billing information");
-    };
-
-    switch (phoneToSubscriberId.get(phone)) {
-      case (?subscriberId) {
-        switch (billingStates.get(subscriberId)) {
-          case (null) { [] };
-          case (?yearlyBilling) {
-            // Convert to array of BillingEntryViews
-            let billingEntryList = List.empty<BillingEntryView>();
-            for ((year, monthlyBilling) in yearlyBilling.entries()) {
-              // Convert Map to array of {month, due, paid} values
-              let monthsList = List.empty<{
-                month : Nat;
-                due : Bool;
-                paid : Bool;
-              }>();
-
-              for ((month, status) in monthlyBilling.entries()) {
-                monthsList.add({ month; due = status.due; paid = status.paid });
-              };
-
-              billingEntryList.add({ year; months = monthsList.toArray() });
-            };
-            billingEntryList.toArray();
-          };
-        };
-      };
-      case (null) { [] };
-    };
-  };
-
-  public shared ({ caller }) func setMonthBillingStatus(
-    phone : Text,
-    year : Nat,
-    month : Nat,
-    due : Bool,
-    paid : Bool
-  ) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can set billing status");
-    };
-
-    switch (phoneToSubscriberId.get(phone)) {
-      case (?subscriberId) {
-        let yearlyBilling = switch (billingStates.get(subscriberId)) {
-          case (?yb) { yb };
-          case (null) {
-            let newYb = Map.empty<Nat, MonthlyBilling>();
-            billingStates.add(subscriberId, newYb);
-            newYb;
-          };
-        };
-
-        let monthlyBilling = switch (yearlyBilling.get(year)) {
-          case (?mb) { mb };
-          case (null) {
-            let newMb = Map.empty<Nat, MonthStatus>();
-            yearlyBilling.add(year, newMb);
-            newMb;
-          };
-        };
-
-        monthlyBilling.add(month, { due; paid });
-      };
-      case (null) { Runtime.trap("Subscriber not found with phone: '" # phone # "'") };
-    };
-  };
-
-  // Financial Reports - Admin only
-  public query ({ caller }) func getTotalDueForMonth(year : Nat, month : Nat) : async Nat {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view financial reports");
-    };
-
-    var total : Nat = 0;
-    for ((id, subscriber) in subscribers.entries()) {
-      if (subscriber.active) {
-        switch (billingStates.get(id)) {
-          case (?yearlyBilling) {
-            switch (yearlyBilling.get(year)) {
-              case (?monthlyBilling) {
-                switch (monthlyBilling.get(month)) {
-                  case (?status) {
-                    if (status.due and not status.paid) {
-                      total += switch (globalPackages.get(subscriber.packageId)) {
-                        case (?pkg) { pkg.priceUsd };
-                        case (null) { 0 };
-                      };
-                    };
-                  };
-                  case (null) {};
-                };
-              };
-              case (null) {};
-            };
-          };
-          case (null) {};
-        };
-      };
-    };
-    total;
-  };
-
-  public query ({ caller }) func getTotalDueForYear(year : Nat) : async Nat {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view financial reports");
-    };
-
-    var total : Nat = 0;
-    for ((id, subscriber) in subscribers.entries()) {
-      if (subscriber.active) {
-        switch (billingStates.get(id)) {
-          case (?yearlyBilling) {
-            switch (yearlyBilling.get(year)) {
-              case (?monthlyBilling) {
-                for ((month, status) in monthlyBilling.entries()) {
-                  if (status.due and not status.paid) {
-                    total += switch (globalPackages.get(subscriber.packageId)) {
-                      case (?pkg) { pkg.priceUsd };
-                      case (null) { 0 };
-                    };
-                  };
-                };
-              };
-              case (null) {};
-            };
-          };
-          case (null) {};
-        };
-      };
-    };
-    total;
-  };
-
-  public query ({ caller }) func getSubscriberBillingSummary(phone : Text) : async {
-    totalDue : Nat;
-    totalPaid : Nat;
-    totalOutstanding : Nat;
-  } {
-    // Users can only view their own billing summary
-    let callerProfile = userProfiles.get(caller);
-    let isOwnRecord = switch (callerProfile) {
-      case (?profile) { profile.phone == phone };
-      case (null) { false };
-    };
-
-    if (not isOwnRecord and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own billing summary");
-    };
-
-    switch (phoneToSubscriberId.get(phone)) {
-      case (?subscriberId) {
-        switch (subscribers.get(subscriberId)) {
-          case (?subscriber) {
-            let packagePrice = switch (globalPackages.get(subscriber.packageId)) {
-              case (?pkg) { pkg.priceUsd };
-              case (null) { 0 };
-            };
-
-            var totalDue = 0;
-            var totalPaid = 0;
-
-            switch (billingStates.get(subscriber.id)) {
-              case (?yearlyBilling) {
-                for ((year, monthlyBilling) in yearlyBilling.entries()) {
-                  for ((month, status) in monthlyBilling.entries()) {
-                    if (status.due) {
-                      totalDue += packagePrice;
-                      if (status.paid) {
-                        totalPaid += packagePrice;
-                      };
-                    };
-                  };
-                };
-              };
-              case (null) {};
-            };
-
-            let totalOutstanding = if (totalDue >= totalPaid) {
-              totalDue - totalPaid;
-            } else {
-              0;
-            };
-            { totalDue; totalPaid; totalOutstanding };
-          };
-          case (null) { { totalDue = 0; totalPaid = 0; totalOutstanding = 0 } };
-        };
-      };
-      case (null) { { totalDue = 0; totalPaid = 0; totalOutstanding = 0 } };
+    {
+      subscribersDeleted = count;
     };
   };
 };

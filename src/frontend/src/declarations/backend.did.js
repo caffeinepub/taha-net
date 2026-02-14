@@ -13,12 +13,12 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const Package = IDL.Record({
-  'id' : IDL.Nat,
-  'name' : IDL.Text,
-  'priceUsd' : IDL.Nat,
-});
 export const Time = IDL.Int;
+export const BulkImportInput = IDL.Record({
+  'names' : IDL.Text,
+  'subscriptionStartDate' : Time,
+  'packageId' : IDL.Nat,
+});
 export const Subscriber = IDL.Record({
   'id' : IDL.Nat,
   'active' : IDL.Bool,
@@ -27,11 +27,18 @@ export const Subscriber = IDL.Record({
   'phone' : IDL.Text,
   'packageId' : IDL.Nat,
 });
-export const BillingEntryView = IDL.Record({
-  'year' : IDL.Nat,
-  'months' : IDL.Vec(
-    IDL.Record({ 'due' : IDL.Bool, 'month' : IDL.Nat, 'paid' : IDL.Bool })
-  ),
+export const BulkImportResult = IDL.Record({
+  'result' : IDL.Opt(Subscriber),
+  'name' : IDL.Text,
+  'error' : IDL.Opt(IDL.Text),
+});
+export const Package = IDL.Record({
+  'id' : IDL.Nat,
+  'name' : IDL.Text,
+  'priceUsd' : IDL.Nat,
+});
+export const DeleteAllSubscribersResult = IDL.Record({
+  'subscribersDeleted' : IDL.Nat,
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
@@ -41,36 +48,17 @@ export const UserProfile = IDL.Record({
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'createPackage' : IDL.Func([IDL.Text, IDL.Nat], [Package], []),
-  'createSubscriber' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Nat, Time],
-      [Subscriber],
+  'bulkCreateSubscribers' : IDL.Func(
+      [BulkImportInput],
+      [IDL.Vec(BulkImportResult)],
       [],
     ),
-  'getAllActiveSubscribers' : IDL.Func([], [IDL.Vec(Subscriber)], ['query']),
+  'createPackage' : IDL.Func([IDL.Text, IDL.Nat], [Package], []),
+  'deleteAllSubscribers' : IDL.Func([], [DeleteAllSubscribersResult], []),
   'getAllPackages' : IDL.Func([], [IDL.Vec(Package)], ['query']),
-  'getBillingState' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(BillingEntryView)],
-      ['query'],
-    ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getPackage' : IDL.Func([IDL.Nat], [Package], ['query']),
-  'getSubscriber' : IDL.Func([IDL.Text], [Subscriber], ['query']),
-  'getSubscriberBillingSummary' : IDL.Func(
-      [IDL.Text],
-      [
-        IDL.Record({
-          'totalOutstanding' : IDL.Nat,
-          'totalPaid' : IDL.Nat,
-          'totalDue' : IDL.Nat,
-        }),
-      ],
-      ['query'],
-    ),
-  'getTotalDueForMonth' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Nat], ['query']),
-  'getTotalDueForYear' : IDL.Func([IDL.Nat], [IDL.Nat], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -78,17 +66,7 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'setMonthBillingStatus' : IDL.Func(
-      [IDL.Text, IDL.Nat, IDL.Nat, IDL.Bool, IDL.Bool],
-      [],
-      [],
-    ),
   'updatePackage' : IDL.Func([IDL.Nat, IDL.Text, IDL.Nat], [Package], []),
-  'updateSubscriber' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Nat, IDL.Bool],
-      [Subscriber],
-      [],
-    ),
 });
 
 export const idlInitArgs = [];
@@ -99,12 +77,12 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const Package = IDL.Record({
-    'id' : IDL.Nat,
-    'name' : IDL.Text,
-    'priceUsd' : IDL.Nat,
-  });
   const Time = IDL.Int;
+  const BulkImportInput = IDL.Record({
+    'names' : IDL.Text,
+    'subscriptionStartDate' : Time,
+    'packageId' : IDL.Nat,
+  });
   const Subscriber = IDL.Record({
     'id' : IDL.Nat,
     'active' : IDL.Bool,
@@ -113,47 +91,35 @@ export const idlFactory = ({ IDL }) => {
     'phone' : IDL.Text,
     'packageId' : IDL.Nat,
   });
-  const BillingEntryView = IDL.Record({
-    'year' : IDL.Nat,
-    'months' : IDL.Vec(
-      IDL.Record({ 'due' : IDL.Bool, 'month' : IDL.Nat, 'paid' : IDL.Bool })
-    ),
+  const BulkImportResult = IDL.Record({
+    'result' : IDL.Opt(Subscriber),
+    'name' : IDL.Text,
+    'error' : IDL.Opt(IDL.Text),
+  });
+  const Package = IDL.Record({
+    'id' : IDL.Nat,
+    'name' : IDL.Text,
+    'priceUsd' : IDL.Nat,
+  });
+  const DeleteAllSubscribersResult = IDL.Record({
+    'subscribersDeleted' : IDL.Nat,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'phone' : IDL.Text });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'createPackage' : IDL.Func([IDL.Text, IDL.Nat], [Package], []),
-    'createSubscriber' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Nat, Time],
-        [Subscriber],
+    'bulkCreateSubscribers' : IDL.Func(
+        [BulkImportInput],
+        [IDL.Vec(BulkImportResult)],
         [],
       ),
-    'getAllActiveSubscribers' : IDL.Func([], [IDL.Vec(Subscriber)], ['query']),
+    'createPackage' : IDL.Func([IDL.Text, IDL.Nat], [Package], []),
+    'deleteAllSubscribers' : IDL.Func([], [DeleteAllSubscribersResult], []),
     'getAllPackages' : IDL.Func([], [IDL.Vec(Package)], ['query']),
-    'getBillingState' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(BillingEntryView)],
-        ['query'],
-      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getPackage' : IDL.Func([IDL.Nat], [Package], ['query']),
-    'getSubscriber' : IDL.Func([IDL.Text], [Subscriber], ['query']),
-    'getSubscriberBillingSummary' : IDL.Func(
-        [IDL.Text],
-        [
-          IDL.Record({
-            'totalOutstanding' : IDL.Nat,
-            'totalPaid' : IDL.Nat,
-            'totalDue' : IDL.Nat,
-          }),
-        ],
-        ['query'],
-      ),
-    'getTotalDueForMonth' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Nat], ['query']),
-    'getTotalDueForYear' : IDL.Func([IDL.Nat], [IDL.Nat], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -161,17 +127,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'setMonthBillingStatus' : IDL.Func(
-        [IDL.Text, IDL.Nat, IDL.Nat, IDL.Bool, IDL.Bool],
-        [],
-        [],
-      ),
     'updatePackage' : IDL.Func([IDL.Nat, IDL.Text, IDL.Nat], [Package], []),
-    'updateSubscriber' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Nat, IDL.Bool],
-        [Subscriber],
-        [],
-      ),
   });
 };
 

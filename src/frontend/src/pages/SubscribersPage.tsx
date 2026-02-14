@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -18,151 +10,128 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetAllActiveSubscribers, useGetAllPackages, useCreateSubscriber, useUpdateSubscriber } from '../hooks/useQueries';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { 
+  useGetAllPackages, 
+  useBulkCreateSubscribers,
+  useIsCallerAdmin,
+  useDeleteAllSubscribers
+} from '../hooks/useQueries';
 import { formatUSD } from '../lib/money';
-import { openWhatsAppChat, isValidWhatsAppPhone } from '../lib/whatsapp';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, MessageCircle, UserX, UserCheck } from 'lucide-react';
-import type { Subscriber, Package } from '../backend';
+import { Upload, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
+import type { BulkImportResult } from '../backend';
 
-type SubscriberFormData = {
-  fullName: string;
-  phone: string;
+type BulkImportFormData = {
+  names: string;
   packageId: string;
   subscriptionStartDate: string;
 };
 
 export function SubscribersPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
-  const [formData, setFormData] = useState<SubscriberFormData>({
-    fullName: '',
-    phone: '',
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const [bulkImportData, setBulkImportData] = useState<BulkImportFormData>({
+    names: '',
     packageId: '',
     subscriptionStartDate: new Date().toISOString().split('T')[0],
   });
+  const [bulkImportResults, setBulkImportResults] = useState<BulkImportResult[] | null>(null);
 
-  const { data: subscribers = [], isLoading: subscribersLoading } = useGetAllActiveSubscribers();
   const { data: packages = [], isLoading: packagesLoading } = useGetAllPackages();
-  const createSubscriber = useCreateSubscriber();
-  const updateSubscriber = useUpdateSubscriber();
+  const { data: isAdmin = false } = useIsCallerAdmin();
+  const bulkCreateSubscribers = useBulkCreateSubscribers();
+  const deleteAllSubscribers = useDeleteAllSubscribers();
 
-  const filteredSubscribers = subscribers.filter((sub) =>
-    sub.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sub.phone.includes(searchQuery)
-  );
+  const handleOpenBulkImport = () => {
+    setBulkImportData({
+      names: '',
+      packageId: packages[0]?.id.toString() || '',
+      subscriptionStartDate: new Date().toISOString().split('T')[0],
+    });
+    setBulkImportResults(null);
+    setIsBulkImportOpen(true);
+  };
 
-  const handleOpenDialog = (subscriber?: Subscriber) => {
-    if (subscriber) {
-      setEditingSubscriber(subscriber);
-      setFormData({
-        fullName: subscriber.fullName,
-        phone: subscriber.phone,
-        packageId: subscriber.packageId.toString(),
-        subscriptionStartDate: new Date(Number(subscriber.subscriptionStartDate) / 1000000)
-          .toISOString()
-          .split('T')[0],
-      });
-    } else {
-      setEditingSubscriber(null);
-      setFormData({
-        fullName: '',
-        phone: '',
-        packageId: packages[0]?.id.toString() || '',
-        subscriptionStartDate: new Date().toISOString().split('T')[0],
-      });
+  const handleCloseBulkImport = () => {
+    setIsBulkImportOpen(false);
+    setBulkImportResults(null);
+  };
+
+  const handleOpenDeleteAll = () => {
+    setIsDeleteAllOpen(true);
+  };
+
+  const handleCloseDeleteAll = () => {
+    setIsDeleteAllOpen(false);
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      const result = await deleteAllSubscribers.mutateAsync();
+      toast.success(`تم حذف ${result.subscribersDeleted} مشترك بنجاح`);
+      handleCloseDeleteAll();
+    } catch (error: any) {
+      const errorMessage = error?.message || 'فشل حذف المشتركين. يرجى المحاولة مرة أخرى.';
+      toast.error(errorMessage);
+      console.error('Delete all subscribers error:', error);
     }
-    setIsDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingSubscriber(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleBulkImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.fullName.trim()) {
-      toast.error('يرجى إدخال الاسم الكامل');
+    if (!bulkImportData.names.trim()) {
+      toast.error('Please enter at least one name');
       return;
     }
 
-    if (!formData.phone.trim()) {
-      toast.error('يرجى إدخال رقم الهاتف');
-      return;
-    }
-
-    if (!formData.packageId) {
-      toast.error('يرجى اختيار باقة');
+    if (!bulkImportData.packageId) {
+      toast.error('Please select a package');
       return;
     }
 
     try {
-      if (editingSubscriber) {
-        await updateSubscriber.mutateAsync({
-          phone: editingSubscriber.phone,
-          fullName: formData.fullName.trim(),
-          packageId: BigInt(formData.packageId),
-          active: editingSubscriber.active,
-        });
-        toast.success('تم تحديث المشترك بنجاح');
-      } else {
-        const startDate = new Date(formData.subscriptionStartDate).getTime() * 1000000;
-        await createSubscriber.mutateAsync({
-          fullName: formData.fullName.trim(),
-          phone: formData.phone.trim(),
-          packageId: BigInt(formData.packageId),
-          subscriptionStartDate: BigInt(startDate),
-        });
-        toast.success('تم إضافة المشترك بنجاح');
-      }
-      handleCloseDialog();
-    } catch (error) {
-      toast.error('فشلت العملية. يرجى المحاولة مرة أخرى.');
-      console.error('Subscriber operation error:', error);
-    }
-  };
-
-  const handleToggleActive = async (subscriber: Subscriber) => {
-    try {
-      await updateSubscriber.mutateAsync({
-        phone: subscriber.phone,
-        fullName: subscriber.fullName,
-        packageId: subscriber.packageId,
-        active: !subscriber.active,
+      const startDate = new Date(bulkImportData.subscriptionStartDate).getTime() * 1000000;
+      const results = await bulkCreateSubscribers.mutateAsync({
+        names: bulkImportData.names,
+        packageId: BigInt(bulkImportData.packageId),
+        subscriptionStartDate: BigInt(startDate),
       });
-      toast.success(subscriber.active ? 'تم إلغاء تفعيل المشترك' : 'تم تفعيل المشترك');
-    } catch (error) {
-      toast.error('فشلت العملية. يرجى المحاولة مرة أخرى.');
-      console.error('Toggle active error:', error);
+
+      setBulkImportResults(results);
+
+      const successCount = results.filter((r) => r.result).length;
+      const failureCount = results.filter((r) => r.error).length;
+
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} subscriber(s)`);
+      }
+      if (failureCount > 0) {
+        toast.error(`Failed to import ${failureCount} subscriber(s)`);
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Bulk import failed. Please try again.';
+      toast.error(errorMessage);
+      console.error('Bulk import error:', error);
     }
   };
 
-  const handleWhatsApp = (phone: string) => {
-    if (!isValidWhatsAppPhone(phone)) {
-      toast.error('رقم الهاتف غير صالح لـ WhatsApp');
-      return;
-    }
-    openWhatsAppChat(phone);
-  };
-
-  const getPackageName = (packageId: bigint) => {
-    const pkg = packages.find((p) => p.id === packageId);
-    return pkg ? pkg.name : 'غير معروف';
-  };
-
-  const getPackagePrice = (packageId: bigint) => {
-    const pkg = packages.find((p) => p.id === packageId);
-    return pkg ? formatUSD(pkg.priceUsd) : '$0.00';
-  };
-
-  if (subscribersLoading || packagesLoading) {
+  if (packagesLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
@@ -178,184 +147,159 @@ export function SubscribersPage() {
           <h2 className="text-3xl font-bold tracking-tight">المشتركون</h2>
           <p className="text-muted-foreground">إدارة مشتركي مركز الإنترنت</p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="ml-2 h-4 w-4" />
-          إضافة مشترك
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <>
+              <Button onClick={handleOpenDeleteAll} variant="destructive">
+                <Trash2 className="ml-2 h-4 w-4" />
+                حذف الكل
+              </Button>
+              <Button onClick={handleOpenBulkImport} variant="outline">
+                <Upload className="ml-2 h-4 w-4" />
+                Bulk Import
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="البحث بالاسم أو رقم الهاتف..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-10"
-        />
-      </div>
-
-      {/* Subscribers Table */}
+      {/* Info Card */}
       <Card>
         <CardHeader>
-          <CardTitle>المشتركون النشطون</CardTitle>
-          <CardDescription>قائمة بجميع المشتركين النشطين</CardDescription>
+          <CardTitle>المشتركون</CardTitle>
+          <CardDescription>
+            استخدم زر "Bulk Import" لإضافة مشتركين جدد، أو زر "حذف الكل" لحذف جميع المشتركين
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {filteredSubscribers.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              {searchQuery ? 'لم يتم العثور على مشتركين' : 'لا يوجد مشتركون بعد'}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>الاسم الكامل</TableHead>
-                  <TableHead>رقم الهاتف</TableHead>
-                  <TableHead>الباقة</TableHead>
-                  <TableHead>السعر</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead className="text-left">الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSubscribers.map((subscriber) => (
-                  <TableRow key={subscriber.id.toString()}>
-                    <TableCell className="font-medium">{subscriber.fullName}</TableCell>
-                    <TableCell className="font-mono">{subscriber.phone}</TableCell>
-                    <TableCell>{getPackageName(subscriber.packageId)}</TableCell>
-                    <TableCell>{getPackagePrice(subscriber.packageId)}</TableCell>
-                    <TableCell>
-                      {subscriber.active ? (
-                        <Badge variant="default">نشط</Badge>
-                      ) : (
-                        <Badge variant="secondary">غير نشط</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-start gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(subscriber)}
-                          title="تعديل"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleWhatsApp(subscriber.phone)}
-                          title="فتح WhatsApp"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleActive(subscriber)}
-                          title={subscriber.active ? 'إلغاء التفعيل' : 'تفعيل'}
-                        >
-                          {subscriber.active ? (
-                            <UserX className="h-4 w-4" />
-                          ) : (
-                            <UserCheck className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <div className="py-8 text-center text-muted-foreground">
+            لا توجد وظيفة عرض المشتركين متاحة حاليًا. يمكنك استخدام الاستيراد الجماعي لإضافة مشتركين.
+          </div>
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+      {/* Bulk Import Dialog */}
+      <Dialog open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingSubscriber ? 'تعديل المشترك' : 'إضافة مشترك جديد'}</DialogTitle>
+            <DialogTitle>Bulk Import Subscribers</DialogTitle>
             <DialogDescription>
-              {editingSubscriber
-                ? 'تحديث معلومات المشترك'
-                : 'أدخل معلومات المشترك الجديد'}
+              Import multiple subscribers at once. Enter one name per line.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">الاسم الكامل</Label>
-              <Input
-                id="fullName"
-                placeholder="أدخل الاسم الكامل"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">رقم الهاتف</Label>
-              <Input
-                id="phone"
-                placeholder="أدخل رقم الهاتف"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                disabled={!!editingSubscriber}
-              />
-              {editingSubscriber && (
-                <p className="text-xs text-muted-foreground">لا يمكن تغيير رقم الهاتف</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="packageId">الباقة</Label>
-              <Select
-                value={formData.packageId}
-                onValueChange={(value) => setFormData({ ...formData, packageId: value })}
-              >
-                <SelectTrigger id="packageId">
-                  <SelectValue placeholder="اختر باقة" />
-                </SelectTrigger>
-                <SelectContent>
-                  {packages.map((pkg) => (
-                    <SelectItem key={pkg.id.toString()} value={pkg.id.toString()}>
-                      {pkg.name} - {formatUSD(pkg.priceUsd)}
-                    </SelectItem>
+          {bulkImportResults ? (
+            <div className="space-y-4">
+              <ScrollArea className="h-[400px] rounded-md border p-4">
+                <div className="space-y-2">
+                  {bulkImportResults.map((result, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        {result.result ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                        <span className="font-medium">{result.name}</span>
+                      </div>
+                      {result.error && (
+                        <span className="text-sm text-red-600">{result.error}</span>
+                      )}
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              </ScrollArea>
+              <DialogFooter>
+                <Button onClick={handleCloseBulkImport}>Close</Button>
+              </DialogFooter>
             </div>
-            {!editingSubscriber && (
+          ) : (
+            <form onSubmit={handleBulkImportSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="subscriptionStartDate">تاريخ بدء الاشتراك</Label>
-                <Input
-                  id="subscriptionStartDate"
-                  type="date"
-                  value={formData.subscriptionStartDate}
+                <Label htmlFor="names">Names (one per line) *</Label>
+                <Textarea
+                  id="names"
+                  placeholder="John Doe&#10;Jane Smith&#10;Bob Johnson"
+                  value={bulkImportData.names}
                   onChange={(e) =>
-                    setFormData({ ...formData, subscriptionStartDate: e.target.value })
+                    setBulkImportData({ ...bulkImportData, names: e.target.value })
+                  }
+                  required
+                  rows={10}
+                  className="font-mono"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bulkPackageId">Package *</Label>
+                <Select
+                  value={bulkImportData.packageId}
+                  onValueChange={(value) =>
+                    setBulkImportData({ ...bulkImportData, packageId: value })
+                  }
+                  required
+                >
+                  <SelectTrigger id="bulkPackageId">
+                    <SelectValue placeholder="Select a package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packages.map((pkg) => (
+                      <SelectItem key={pkg.id.toString()} value={pkg.id.toString()}>
+                        {pkg.name} - {formatUSD(pkg.priceUsd)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bulkSubscriptionStartDate">Subscription Start Date</Label>
+                <Input
+                  id="bulkSubscriptionStartDate"
+                  type="date"
+                  value={bulkImportData.subscriptionStartDate}
+                  onChange={(e) =>
+                    setBulkImportData({
+                      ...bulkImportData,
+                      subscriptionStartDate: e.target.value,
+                    })
                   }
                 />
               </div>
-            )}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                إلغاء
-              </Button>
-              <Button
-                type="submit"
-                disabled={createSubscriber.isPending || updateSubscriber.isPending}
-              >
-                {createSubscriber.isPending || updateSubscriber.isPending
-                  ? 'جاري الحفظ...'
-                  : editingSubscriber
-                  ? 'تحديث'
-                  : 'إضافة'}
-              </Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleCloseBulkImport}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={bulkCreateSubscribers.isPending}>
+                  {bulkCreateSubscribers.isPending ? 'Importing...' : 'Import'}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete All Confirmation Dialog */}
+      <AlertDialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد تمامًا؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع المشتركين وجميع بيانات الفواتير المرتبطة بهم بشكل دائم.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCloseDeleteAll}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              disabled={deleteAllSubscribers.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteAllSubscribers.isPending ? 'جاري الحذف...' : 'نعم، احذف الكل'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

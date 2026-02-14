@@ -89,6 +89,15 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface DeleteAllSubscribersResult {
+    subscribersDeleted: bigint;
+}
+export type Time = bigint;
+export interface BulkImportResult {
+    result?: Subscriber;
+    name: string;
+    error?: string;
+}
 export interface Subscriber {
     id: bigint;
     active: boolean;
@@ -97,7 +106,11 @@ export interface Subscriber {
     phone: string;
     packageId: bigint;
 }
-export type Time = bigint;
+export interface BulkImportInput {
+    names: string;
+    subscriptionStartDate: Time;
+    packageId: bigint;
+}
 export interface Package {
     id: bigint;
     name: string;
@@ -107,14 +120,6 @@ export interface UserProfile {
     name: string;
     phone: string;
 }
-export interface BillingEntryView {
-    year: bigint;
-    months: Array<{
-        due: boolean;
-        month: bigint;
-        paid: boolean;
-    }>;
-}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -123,30 +128,19 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    bulkCreateSubscribers(input: BulkImportInput): Promise<Array<BulkImportResult>>;
     createPackage(name: string, priceUsd: bigint): Promise<Package>;
-    createSubscriber(fullName: string, phone: string, packageId: bigint, subscriptionStartDate: Time): Promise<Subscriber>;
-    getAllActiveSubscribers(): Promise<Array<Subscriber>>;
+    deleteAllSubscribers(): Promise<DeleteAllSubscribersResult>;
     getAllPackages(): Promise<Array<Package>>;
-    getBillingState(phone: string): Promise<Array<BillingEntryView>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getPackage(id: bigint): Promise<Package>;
-    getSubscriber(phone: string): Promise<Subscriber>;
-    getSubscriberBillingSummary(phone: string): Promise<{
-        totalOutstanding: bigint;
-        totalPaid: bigint;
-        totalDue: bigint;
-    }>;
-    getTotalDueForMonth(year: bigint, month: bigint): Promise<bigint>;
-    getTotalDueForYear(year: bigint): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    setMonthBillingStatus(phone: string, year: bigint, month: bigint, due: boolean, paid: boolean): Promise<void>;
     updatePackage(id: bigint, name: string, priceUsd: bigint): Promise<Package>;
-    updateSubscriber(phone: string, fullName: string, packageId: bigint, active: boolean): Promise<Subscriber>;
 }
-import type { UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { BulkImportResult as _BulkImportResult, Subscriber as _Subscriber, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -177,6 +171,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async bulkCreateSubscribers(arg0: BulkImportInput): Promise<Array<BulkImportResult>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.bulkCreateSubscribers(arg0);
+                return from_candid_vec_n3(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.bulkCreateSubscribers(arg0);
+            return from_candid_vec_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async createPackage(arg0: string, arg1: bigint): Promise<Package> {
         if (this.processError) {
             try {
@@ -191,31 +199,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createSubscriber(arg0: string, arg1: string, arg2: bigint, arg3: Time): Promise<Subscriber> {
+    async deleteAllSubscribers(): Promise<DeleteAllSubscribersResult> {
         if (this.processError) {
             try {
-                const result = await this.actor.createSubscriber(arg0, arg1, arg2, arg3);
+                const result = await this.actor.deleteAllSubscribers();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createSubscriber(arg0, arg1, arg2, arg3);
-            return result;
-        }
-    }
-    async getAllActiveSubscribers(): Promise<Array<Subscriber>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllActiveSubscribers();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllActiveSubscribers();
+            const result = await this.actor.deleteAllSubscribers();
             return result;
         }
     }
@@ -233,46 +227,32 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getBillingState(arg0: string): Promise<Array<BillingEntryView>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getBillingState(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getBillingState(arg0);
-            return result;
-        }
-    }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n8(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n8(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n9(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n9(this._uploadFile, this._downloadFile, result);
         }
     }
     async getPackage(arg0: bigint): Promise<Package> {
@@ -289,78 +269,18 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getSubscriber(arg0: string): Promise<Subscriber> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getSubscriber(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getSubscriber(arg0);
-            return result;
-        }
-    }
-    async getSubscriberBillingSummary(arg0: string): Promise<{
-        totalOutstanding: bigint;
-        totalPaid: bigint;
-        totalDue: bigint;
-    }> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getSubscriberBillingSummary(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getSubscriberBillingSummary(arg0);
-            return result;
-        }
-    }
-    async getTotalDueForMonth(arg0: bigint, arg1: bigint): Promise<bigint> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getTotalDueForMonth(arg0, arg1);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getTotalDueForMonth(arg0, arg1);
-            return result;
-        }
-    }
-    async getTotalDueForYear(arg0: bigint): Promise<bigint> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getTotalDueForYear(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getTotalDueForYear(arg0);
-            return result;
-        }
-    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n8(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n8(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -391,20 +311,6 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async setMonthBillingStatus(arg0: string, arg1: bigint, arg2: bigint, arg3: boolean, arg4: boolean): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.setMonthBillingStatus(arg0, arg1, arg2, arg3, arg4);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.setMonthBillingStatus(arg0, arg1, arg2, arg3, arg4);
-            return result;
-        }
-    }
     async updatePackage(arg0: bigint, arg1: string, arg2: bigint): Promise<Package> {
         if (this.processError) {
             try {
@@ -419,28 +325,38 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async updateSubscriber(arg0: string, arg1: string, arg2: bigint, arg3: boolean): Promise<Subscriber> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.updateSubscriber(arg0, arg1, arg2, arg3);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.updateSubscriber(arg0, arg1, arg2, arg3);
-            return result;
-        }
-    }
 }
-function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n5(_uploadFile, _downloadFile, value);
+function from_candid_BulkImportResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BulkImportResult): BulkImportResult {
+    return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+function from_candid_UserRole_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n10(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Subscriber]): Subscriber | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    result: [] | [_Subscriber];
+    name: string;
+    error: [] | [string];
+}): {
+    result?: Subscriber;
+    name: string;
+    error?: string;
+} {
+    return {
+        result: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.result)),
+        name: value.name,
+        error: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.error))
+    };
+}
+function from_candid_variant_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -448,6 +364,9 @@ function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uin
     guest: null;
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
+}
+function from_candid_vec_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_BulkImportResult>): Array<BulkImportResult> {
+    return value.map((x)=>from_candid_BulkImportResult_n4(_uploadFile, _downloadFile, x));
 }
 function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
