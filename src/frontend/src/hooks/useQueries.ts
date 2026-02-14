@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, Subscriber, Package, BulkImportInput, BulkImportResult, DeleteAllSubscribersResult } from '../backend';
+import type { UserProfile, Subscriber, Package, BulkImportInput, BulkImportResult, DeleteAllSubscribersResult, MonthlyBillsResult } from '../backend';
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -97,5 +97,20 @@ export function useDeleteAllSubscribers() {
       queryClient.invalidateQueries({ queryKey: ['billing'] });
       queryClient.invalidateQueries({ queryKey: ['totals'] });
     },
+  });
+}
+
+// Monthly Billing Query
+export function useMonthlyBills(year: number, month: number) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<MonthlyBillsResult>({
+    queryKey: ['billing', 'month', year, month],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.fetchMonthlyBills(BigInt(year), BigInt(month));
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
   });
 }

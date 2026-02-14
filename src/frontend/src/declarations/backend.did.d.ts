@@ -21,6 +21,11 @@ export interface BulkImportResult {
   'error' : [] | [string],
 }
 export interface DeleteAllSubscribersResult { 'subscribersDeleted' : bigint }
+export interface MonthlyBillsResult {
+  'month' : bigint,
+  'year' : bigint,
+  'subscribers' : Array<SubscriberMonthlyBill>,
+}
 export interface Package { 'id' : bigint, 'name' : string, 'priceUsd' : bigint }
 export interface Subscriber {
   'id' : bigint,
@@ -29,6 +34,10 @@ export interface Subscriber {
   'subscriptionStartDate' : Time,
   'phone' : string,
   'packageId' : bigint,
+}
+export interface SubscriberMonthlyBill {
+  'fullName' : string,
+  'amountDue' : bigint,
 }
 export type Time = bigint;
 export interface UserProfile { 'name' : string, 'phone' : string }
@@ -44,6 +53,7 @@ export interface _SERVICE {
   >,
   'createPackage' : ActorMethod<[string, bigint], Package>,
   'deleteAllSubscribers' : ActorMethod<[], DeleteAllSubscribersResult>,
+  'fetchMonthlyBills' : ActorMethod<[bigint, bigint], MonthlyBillsResult>,
   'getAllPackages' : ActorMethod<[], Array<Package>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,

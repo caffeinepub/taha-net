@@ -1,79 +1,76 @@
 {
   "kind": "build_request",
-  "title": "Add admin-only 'Delete all subscribers' bulk removal",
+  "title": "Show subscriber name with amount owed for March in Monthly Billing",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add an admin-only backend API to delete all subscribers and all subscriber-related derived state (including active subscriber set, phone-to-subscriber lookup, and all billing state keyed by subscriber). The API must return a summary count of how many subscriber records were removed.",
+      "text": "Add a backend query API that returns, for a given (year, month), a list of active subscribers with their full name and the amount owed for that month, computed from the subscriber's package price.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "حذف الكل مشتركين"
+          "الاسم مع  المبلغ عليه شهر مارس"
         ]
       },
       "acceptanceCriteria": [
-        "Calling the new method as an admin removes all entries from the subscribers collection.",
-        "After deletion, getAllActiveSubscribers() returns an empty array.",
-        "After deletion, getTotalDueForMonth(year, month) returns 0 for any inputs.",
-        "After deletion, getTotalDueForYear(year) returns 0 for any inputs.",
-        "After deletion, getBillingState(phone) returns [] for any phone.",
-        "Non-admin callers are rejected with an Unauthorized trap consistent with existing admin-only APIs.",
-        "The method returns the number of subscribers deleted (0 is valid when already empty)."
+        "A new Motoko query method exists in backend/main.mo that accepts (year: Nat, month: Nat).",
+        "The method returns an array of entries containing at minimum: subscriberId, fullName, and amountUsd (Nat).",
+        "For each entry, amountUsd equals the subscriber's package priceUsd (from globalPackages) when the subscriber is active and the subscriptionStartDate is on or before the requested month/year; otherwise the subscriber is omitted (or amountUsd is 0, but behavior must be consistent and documented in code comments).",
+        "If a subscriber's packageId is missing from globalPackages, the entry is safely skipped or returns amountUsd = 0 (no trap).",
+        "The method is admin-only (consistent with other subscriber-management operations), and traps with an Unauthorized message for non-admin callers."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Expose the new backend bulk-delete API in the frontend data layer by adding a React Query mutation hook that calls the backend method and invalidates all affected queries (at minimum: ['subscribers'], all ['billing', *] queries, and ['totals', *] queries).",
+      "text": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "حذف الكل مشتركين"
+          "الاسم مع  المبلغ عليه شهر مارس"
         ]
       },
       "acceptanceCriteria": [
-        "A new React Query mutation hook exists in frontend/src/hooks/useQueries.ts for deleting all subscribers.",
-        "On successful mutation, the subscribers list refetches and displays no rows.",
-        "On successful mutation, totals and billing-dependent UI refetches (no stale totals).",
-        "Errors from the backend are surfaced to the caller as a rejected mutation (so the UI can toast/display the error)."
+        "A new hook is added in frontend/src/hooks/useQueries.ts that calls the new backend query and returns the result via useQuery.",
+        "The queryKey includes both selectedYear and selectedMonth (e.g., ['billing','month',year,month]) so changing filters refetches correctly.",
+        "The hook handles the 'actor not available' case consistently with existing hooks (no crashes)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add an admin-only UI control on the Subscribers page to delete all subscribers. The UI must (1) be visible only to admins, (2) show a confirmation dialog describing that the action is irreversible and will delete subscribers and billing data, and (3) on confirm, call the new mutation, show success/error feedback, and disable the confirm button while the request is in progress.",
+      "text": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "حذف الكل مشتركين"
+          "الاسم مع  المبلغ عليه شهر مارس"
         ]
       },
       "acceptanceCriteria": [
-        "When logged in as an admin, a 'Delete all subscribers' action is available on the Subscribers page (frontend/src/pages/SubscribersPage.tsx).",
-        "When logged in as a non-admin, the delete-all action is not shown.",
-        "Clicking the action opens a confirmation dialog; cancelling closes the dialog without changes.",
-        "Confirming triggers the delete-all mutation and disables the confirm button while pending.",
-        "On success, the subscribers table shows the empty state, and a success toast/message is shown.",
-        "On failure (including Unauthorized), an error toast/message is shown and no UI state is incorrectly cleared client-side."
+        "frontend/src/pages/BillingPage.tsx uses the new React Query hook to fetch billing entries for (selectedYear, selectedMonth).",
+        "The page renders a visible list/table with at least two columns: Subscriber Name and Amount Owed (formatted as USD using existing money formatting helpers).",
+        "When the user selects March (value 3), the results shown correspond to month=3 queries.",
+        "Loading state shows a skeleton (or equivalent) while the billing query is fetching.",
+        "Error state shows an alert with English user-facing text describing that billing data could not be loaded.",
+        "The previous placeholder message indicating billing is unavailable is removed or replaced so the page no longer claims backend support is missing once the feature is implemented."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
-    "Do not edit files under frontend/immutablePaths (e.g., frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*). Compose existing UI components instead."
+    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo if a stable-state upgrade is required.",
+    "Do not edit files under frontend/src/components/ui or any paths listed in frontend.immutablePaths (compose components instead)."
   ],
   "nonGoals": [
-    "Do not add per-subscriber multi-select deletion or filtering-based deletion.",
-    "Do not add an undo/restore feature for deleted subscribers.",
-    "Do not change authentication/authorization model beyond reusing existing admin checks."
+    "Implementing full billing lifecycle management (marking months paid/unpaid, editing per-subscriber billing status) beyond computing and displaying the amount owed.",
+    "Adding third-party authentication or external database/storage.",
+    "Changing app language/RTL layout globally."
   ],
   "imageRequirements": {
     "required": [],

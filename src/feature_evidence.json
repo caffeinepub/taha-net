@@ -2,8 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-expose-the-new-backend-bulk-delete-api-in-the-frontend-data-layer-by-adding-a-react-query-mutation-hook-that-calls-the-backend-method-and-invalidates-all-affected-queries-at-minimum-subscribers-all-billing-queries-and-totals-queries",
-      "featureTitle": "Expose the new backend bulk-delete API in the frontend data layer by adding a React Query mutation hook that calls the backend method and invalidates all affected queries (at minimum: ['subscribers'], all ['billing', *] queries, and ['totals', *] queries).",
+      "featureId": "feature-expose-the-new-backend-monthly-amounts-query-in-the-frontend-react-query-data-layer-as-a-typed-hook-and-ensure-cache-keys-are-parameterized-by-year-and-month",
+      "featureTitle": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
       "files": [
         "frontend/src/hooks/useQueries.ts"
       ],
@@ -21,10 +21,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-admin-only-ui-control-on-the-subscribers-page-to-delete-all-subscribers-the-ui-must-1-be-visible-only-to-admins-2-show-a-confirmation-dialog-describing-that-the-action-is-irreversible-and-will-delete-subscribers-and-billing-data-and-3-on-confirm-call-the-new-mutation-show-success-error-feedback-and-disable-the-confirm-button-while-the-request-is-in-progress",
-      "featureTitle": "Add an admin-only UI control on the Subscribers page to delete all subscribers. The UI must (1) be visible only to admins, (2) show a confirmation dialog describing that the action is irreversible and will delete subscribers and billing data, and (3) on confirm, call the new mutation, show success/error feedback, and disable the confirm button while the request is in progress.",
+      "featureId": "feature-update-the-monthly-billing-page-to-display-a-table-list-for-the-selected-month-year-that-shows-each-subscriber-s-name-and-the-amount-owed-and-ensure-march-month-3-works-when-selected",
+      "featureTitle": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
       "files": [
-        "frontend/src/pages/SubscribersPage.tsx"
+        "frontend/src/pages/BillingPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",

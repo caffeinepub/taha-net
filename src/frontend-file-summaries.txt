@@ -1,6 +1,6 @@
 {
   "frontend/src/App.tsx": "Main application component with Arabic UI text, RTL-adjusted icon spacing, and tab-based navigation between Dashboard, Subscribers, and Billing pages.",
-  "frontend/src/hooks/useQueries.ts": "React Query hooks for backend operations including user profiles, packages, admin status checking, bulk import, and delete all subscribers with proper cache invalidation.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for backend operations including user profiles, packages, admin status checking, bulk import, delete all subscribers, and monthly billing with proper cache invalidation.",
   "frontend/src/lib/money.ts": "USD currency formatting utilities using Intl.NumberFormat and bigint conversion helpers for backend operations.",
   "frontend/src/lib/whatsapp.ts": "WhatsApp phone number validation, sanitization, and wa.me URL generation utilities with error handling.",
   "frontend/src/components/auth/AuthGate.tsx": "Login screen component with Arabic text and RTL-adjusted icon positioning for unauthenticated users.",
@@ -8,7 +8,7 @@
   "frontend/src/components/auth/LoginButton.tsx": "Reusable login/logout button with Arabic labels and RTL icon spacing.",
   "frontend/src/pages/DashboardPage.tsx": "Dashboard page with Arabic UI displaying month/year selectors and placeholder stats cards with a message indicating that billing data requires additional backend implementation.",
   "frontend/src/pages/SubscribersPage.tsx": "Simplified subscriber management page with Arabic UI that only supports bulk import and delete all operations for admins, as individual subscriber CRUD operations are not available in the backend.",
-  "frontend/src/pages/BillingPage.tsx": "Billing page with Arabic UI showing month/year selectors and a placeholder message indicating that billing functionality requires additional backend implementation.",
+  "frontend/src/pages/BillingPage.tsx": "Billing page with Arabic UI displaying month/year selectors and a table showing subscriber names and amounts owed for the selected month, with loading and error states.",
   "frontend/src/index.css": "Global styles with OKLCH color system and RTL-specific adjustments for proper text alignment and direction in Arabic.",
   "frontend/tailwind.config.js": "Tailwind configuration with custom color tokens, Inter/JetBrains Mono fonts, and extended design system utilities.",
   "frontend/index.html": "HTML entry point configured for Arabic language (lang=\"ar\") and RTL direction (dir=\"rtl\").",

@@ -7,16 +7,16 @@
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-expose-the-new-backend-bulk-delete-api-in-the-frontend-data-layer-by-adding-a-react-query-mutation-hook-that-calls-the-backend-method-and-invalidates-all-affected-queries-at-minimum-subscribers-all-billing-queries-and-totals-queries",
-      "title": "Expose the new backend bulk-delete API in the frontend data layer by adding a React Query mutation hook that calls the backend method and invalidates all affected queries (at minimum: ['subscribers'], all ['billing', *] queries, and ['totals', *] queries).",
+      "id": "feature-expose-the-new-backend-monthly-amounts-query-in-the-frontend-react-query-data-layer-as-a-typed-hook-and-ensure-cache-keys-are-parameterized-by-year-and-month",
+      "title": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-an-admin-only-ui-control-on-the-subscribers-page-to-delete-all-subscribers-the-ui-must-1-be-visible-only-to-admins-2-show-a-confirmation-dialog-describing-that-the-action-is-irreversible-and-will-delete-subscribers-and-billing-data-and-3-on-confirm-call-the-new-mutation-show-success-error-feedback-and-disable-the-confirm-button-while-the-request-is-in-progress",
-      "title": "Add an admin-only UI control on the Subscribers page to delete all subscribers. The UI must (1) be visible only to admins, (2) show a confirmation dialog describing that the action is irreversible and will delete subscribers and billing data, and (3) on confirm, call the new mutation, show success/error feedback, and disable the confirm button while the request is in progress.",
+      "id": "feature-update-the-monthly-billing-page-to-display-a-table-list-for-the-selected-month-year-that-shows-each-subscriber-s-name-and-the-amount-owed-and-ensure-march-month-3-works-when-selected",
+      "title": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
       "reqIds": [
         "REQ-3"
       ],
@@ -26,20 +26,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Ability to delete all subscribers (bulk removal)",
+      "summary": "Display the subscriber/customer name along with the amount owed for the month of March",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Add an admin-only backend API to delete all subscribers and all subscriber-related derived state (including active subscriber set, phone-to-subscriber lookup, and all billing state keyed by subscriber). The API must return a summary count of how many subscriber records were removed.",
+      "summary": "Add a backend query API that returns, for a given (year, month), a list of active subscribers with their full name and the amount owed for that month, computed from the subscriber's package price.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Add admin-only 'Delete all subscribers' bulk removal",
+  "projectName": "Show subscriber name with amount owed for March in Monthly Billing",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

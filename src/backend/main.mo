@@ -194,11 +194,11 @@ actor {
             active = true;
             subscriptionStartDate = input.subscriptionStartDate;
           };
-          
+
           subscribers.add(nextSubscriberId, subscriber);
           activeSubscribers.add(nextSubscriberId);
           phoneToSubscriberId.add(placeholderPhone, nextSubscriberId);
-          
+
           results.add({
             name = trimmed;
             result = ?subscriber;
@@ -238,6 +238,64 @@ actor {
 
     {
       subscribersDeleted = count;
+    };
+  };
+
+  public type SubscriberMonthlyBill = {
+    fullName : Text;
+    amountDue : Nat; // USD cents
+  };
+
+  public type MonthlyBillsResult = {
+    year : Nat;
+    month : Nat;
+    subscribers : [SubscriberMonthlyBill];
+  };
+
+  // Admin-only: Fetch monthly bills for subscribers by year and month
+  public query ({ caller }) func fetchMonthlyBills(year : Nat, month : Nat) : async MonthlyBillsResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can fetch monthly bills");
+    };
+
+    let bills = List.empty<SubscriberMonthlyBill>();
+
+    switch (billingStates) {
+      case (states) {
+        if (states.size() == 0) {
+          Runtime.trap("No booked subscriptions found");
+        };
+
+        switch (states.get(year)) {
+          case (null) { Runtime.trap("No bookings found for year: " # year.toText()) };
+          case (?yearlyBilling) {
+            switch (yearlyBilling.get(month)) {
+              case (null) { Runtime.trap("No bookings found for year " # year.toText() # " month: " # month.toText()) };
+              case (?_) {
+                for ((id, subscriber) in subscribers.entries()) {
+                  // Ensure the subscriber is active
+                  if (subscriber.active) {
+                    switch (globalPackages.get(subscriber.packageId)) {
+                      case (null) { Runtime.trap("Subscriber package not found") };
+                      case (?package) {
+                        bills.add({
+                          fullName = subscriber.fullName;
+                          amountDue = package.priceUsd;
+                        });
+                      };
+                    };
+                  };
+                };
+                {
+                  year;
+                  month;
+                  subscribers = bills.toArray();
+                };
+              };
+            };
+          };
+        };
+      };
     };
   };
 };

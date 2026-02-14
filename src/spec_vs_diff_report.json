@@ -1,40 +1,25 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T01:39:46.279Z",
-  "summary": "Frontend adds a delete-all-subscribers React Query mutation hook and wires a delete-all handler/toast flow on SubscribersPage, but the diff does not provide evidence that the required backend admin-only deleteAllSubscribers API (and clearing of all subscriber-derived/billing state) is implemented. Some additional unrelated UI/data-layer changes appear to have been introduced (user profile hooks/pages placeholders).",
+  "generatedAt": "2026-02-14T01:52:02.894Z",
+  "summary": "Frontend adds a new React Query hook for monthly billing keyed by (year, month) and updates BillingPage to show a month/year selector, loading skeleton, error alert, and a billing table. The backend diff is truncated and does not provide evidence that the required new admin-only monthly billing query API (with correct filtering and safe package lookup) was implemented in backend/main.mo.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Add an admin-only backend API to delete all subscribers and all subscriber-related derived state (active subscriber set, phone-to-subscriber lookup, and all billing state keyed by subscriber) and return a count of deleted subscribers; reject non-admins with an Unauthorized trap.",
-      "reason": "The backend diff snippet is truncated and shows no definition of a deleteAllSubscribers (or similarly named) method, nor any code clearing subscribers/activeSubscribers/phoneToSubscriberId/billingStates or returning a deleted-count summary, so the requirement cannot be verified as implemented.",
+      "requirement": "Add a backend admin-only query API in backend/main.mo that accepts (year: Nat, month: Nat) and returns active subscribers with {subscriberId, fullName, amountUsd}, computed from package priceUsd and filtered by subscriptionStartDate <= requested month/year, with safe handling of missing packageId and Unauthorized trap for non-admins.",
+      "reason": "The provided backend/main.mo diff excerpt is truncated and only shows types, package CRUD, and unrelated user profile functions; it does not show any new query method that accepts (year, month) or implements the required billing computation, filtering, safe package lookup, and admin-only authorization behavior.",
       "evidence": [
-        "backend/main.mo (truncated; no deleteAllSubscribers shown)"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Admin-only UI control on Subscribers page with confirmation dialog (irreversible + deletes billing data), confirm disables while pending, and success/error feedback.",
-      "reason": "SubscribersPage shows state/handlers for delete-all, imports AlertDialog components, and uses toasts, but the diff is truncated before the JSX that would prove (1) the control is only shown to admins, (2) the confirmation dialog text explicitly describes irreversibility and billing deletion, and (3) the confirm button is disabled while the mutation is pending.",
-      "evidence": [
-        "frontend/src/pages/SubscribersPage.tsx (truncated)"
+        "backend/main.mo (truncated; no monthly billing query shown)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added/expanded User Profile functionality in the frontend data layer (queries/mutations for user profiles).",
-      "reason": "BuildRequest focuses only on admin-only bulk deletion of subscribers; user-profile query/mutation hooks are not requested.",
+      "description": "User Profile system added to the backend (UserProfile type, getCallerUserProfile/getUserProfile queries, saveCallerUserProfile mutation) and corresponding React Query hooks.",
+      "reason": "Not requested by REQ-1/2/3; BuildRequest is specifically about monthly billing amounts by subscriber for a selected month/year.",
       "evidence": [
+        "backend/main.mo",
         "frontend/src/hooks/useQueries.ts"
-      ]
-    },
-    {
-      "description": "Billing and Dashboard pages show placeholder alerts/messages that billing functionality is not available and requires additional backend work.",
-      "reason": "BuildRequest does not request changes to BillingPage or DashboardPage; it only requires invalidating billing/totals queries after deletion.",
-      "evidence": [
-        "frontend/src/pages/BillingPage.tsx",
-        "frontend/src/pages/DashboardPage.tsx (truncated)"
       ]
     }
   ],
@@ -44,8 +29,6 @@
     "frontend-file-summaries.txt",
     "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/BillingPage.tsx",
-    "frontend/src/pages/DashboardPage.tsx",
-    "frontend/src/pages/SubscribersPage.tsx",
     "project_state.json"
   ]
 }

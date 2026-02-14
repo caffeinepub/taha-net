@@ -24,15 +24,24 @@ export interface Subscriber {
     phone: string;
     packageId: bigint;
 }
-export interface BulkImportInput {
-    names: string;
-    subscriptionStartDate: Time;
-    packageId: bigint;
+export interface MonthlyBillsResult {
+    month: bigint;
+    year: bigint;
+    subscribers: Array<SubscriberMonthlyBill>;
 }
 export interface Package {
     id: bigint;
     name: string;
     priceUsd: bigint;
+}
+export interface SubscriberMonthlyBill {
+    fullName: string;
+    amountDue: bigint;
+}
+export interface BulkImportInput {
+    names: string;
+    subscriptionStartDate: Time;
+    packageId: bigint;
 }
 export interface UserProfile {
     name: string;
@@ -48,6 +57,7 @@ export interface backendInterface {
     bulkCreateSubscribers(input: BulkImportInput): Promise<Array<BulkImportResult>>;
     createPackage(name: string, priceUsd: bigint): Promise<Package>;
     deleteAllSubscribers(): Promise<DeleteAllSubscribersResult>;
+    fetchMonthlyBills(year: bigint, month: bigint): Promise<MonthlyBillsResult>;
     getAllPackages(): Promise<Array<Package>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;

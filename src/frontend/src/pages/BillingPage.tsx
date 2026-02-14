@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGetAllPackages } from '../hooks/useQueries';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useMonthlyBills } from '../hooks/useQueries';
+import { formatUSD } from '../lib/money';
 import { Calendar, AlertCircle } from 'lucide-react';
 
 const MONTHS = [
@@ -26,18 +28,9 @@ export function BillingPage() {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
 
-  const { isLoading: packagesLoading } = useGetAllPackages();
+  const { data: billingData, isLoading, isError, error } = useMonthlyBills(selectedYear, selectedMonth);
 
   const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i);
-
-  if (packagesLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -78,13 +71,15 @@ export function BillingPage() {
         </Select>
       </div>
 
-      {/* Info Alert */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          وظيفة الفواتير غير متاحة حاليًا. يتطلب ذلك تنفيذ وظائف إضافية في الخادم الخلفي.
-        </AlertDescription>
-      </Alert>
+      {/* Error Alert */}
+      {isError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load billing data. {error instanceof Error ? error.message : 'Please try again later.'}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Billing Table */}
       <Card>
@@ -93,13 +88,39 @@ export function BillingPage() {
             الفواتير لشهر {MONTHS.find((m) => m.value === selectedMonth)?.label} {selectedYear}
           </CardTitle>
           <CardDescription>
-            تعيين حالة الاستحقاق والدفع لكل مشترك
+            المبالغ المستحقة لكل مشترك
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="py-8 text-center text-muted-foreground">
-            لا توجد بيانات فواتير متاحة. يتطلب ذلك تنفيذ وظائف الفواتير في الخادم الخلفي.
-          </div>
+          {isLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : billingData && billingData.subscribers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">اسم المشترك</TableHead>
+                  <TableHead className="text-right">المبلغ المستحق</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {billingData.subscribers.map((subscriber, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{subscriber.fullName}</TableCell>
+                    <TableCell>{formatUSD(subscriber.amountDue)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              لا توجد فواتير لهذا الشهر
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -106,15 +106,24 @@ export interface Subscriber {
     phone: string;
     packageId: bigint;
 }
-export interface BulkImportInput {
-    names: string;
-    subscriptionStartDate: Time;
-    packageId: bigint;
+export interface MonthlyBillsResult {
+    month: bigint;
+    year: bigint;
+    subscribers: Array<SubscriberMonthlyBill>;
 }
 export interface Package {
     id: bigint;
     name: string;
     priceUsd: bigint;
+}
+export interface SubscriberMonthlyBill {
+    fullName: string;
+    amountDue: bigint;
+}
+export interface BulkImportInput {
+    names: string;
+    subscriptionStartDate: Time;
+    packageId: bigint;
 }
 export interface UserProfile {
     name: string;
@@ -131,6 +140,7 @@ export interface backendInterface {
     bulkCreateSubscribers(input: BulkImportInput): Promise<Array<BulkImportResult>>;
     createPackage(name: string, priceUsd: bigint): Promise<Package>;
     deleteAllSubscribers(): Promise<DeleteAllSubscribersResult>;
+    fetchMonthlyBills(year: bigint, month: bigint): Promise<MonthlyBillsResult>;
     getAllPackages(): Promise<Array<Package>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -210,6 +220,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteAllSubscribers();
+            return result;
+        }
+    }
+    async fetchMonthlyBills(arg0: bigint, arg1: bigint): Promise<MonthlyBillsResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.fetchMonthlyBills(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.fetchMonthlyBills(arg0, arg1);
             return result;
         }
     }

@@ -1,41 +1,40 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Admin-only bulk delete all subscribers (frontend wiring)",
+  "title": "Monthly Billing: show subscriber name and amount owed per selected month",
   "requirements": [
     {
       "id": "REQ-2",
-      "summary": "Add a React Query mutation hook to call deleteAllSubscribers() and invalidate subscribers, billing, and totals queries.",
+      "summary": "Add a typed React Query hook that fetches monthly billing amounts for a given year/month with a parameterized cache key.",
       "acceptanceCriteria": [
-        "A new React Query mutation hook exists in frontend/src/hooks/useQueries.ts for deleting all subscribers.",
-        "On successful mutation, the subscribers list refetches and displays no rows.",
-        "On successful mutation, totals and billing-dependent UI refetches (no stale totals).",
-        "Errors from the backend are surfaced to the caller as a rejected mutation (so the UI can toast/display the error)."
+        "A new hook is added in frontend/src/hooks/useQueries.ts that calls the new backend query and returns the result via useQuery.",
+        "The queryKey includes both selectedYear and selectedMonth (e.g., ['billing','month',year,month]) so changing filters refetches correctly.",
+        "The hook handles the 'actor not available' case consistently with existing hooks (no crashes)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a new React Query mutation hook (e.g., useDeleteAllSubscribers) that calls actor.deleteAllSubscribers() (per frontend/src/backend.d.ts) and, on success, invalidates queries for ['subscribers'], all ['billing', *] queries (via queryKey prefix ['billing']), and all ['totals', *] queries (via queryKey prefix ['totals']). Ensure errors are not swallowed so callers receive a rejected mutation for UI handling. Verify the authorization component's frontend usage instructions before implementing."
+          "description": "Add a new typed React Query hook (e.g., useFetchMonthlyBills / useMonthlyBills) that calls the backend monthly billing query (per backend interface) and returns results via useQuery. Ensure the queryKey is parameterized as ['billing','month',year,month]. Mirror existing actor-availability handling (e.g., enabled gating on actor + returning safe defaults when actor is missing) to avoid crashes."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add an admin-only 'Delete all subscribers' control on SubscribersPage with irreversible confirmation and pending/success/error UX.",
+      "summary": "Update the Monthly Billing page to fetch and render a name + amount owed list/table for the selected month/year, with loading and error states.",
       "acceptanceCriteria": [
-        "When logged in as an admin, a 'Delete all subscribers' action is available on the Subscribers page (frontend/src/pages/SubscribersPage.tsx).",
-        "When logged in as a non-admin, the delete-all action is not shown.",
-        "Clicking the action opens a confirmation dialog; cancelling closes the dialog without changes.",
-        "Confirming triggers the delete-all mutation and disables the confirm button while pending.",
-        "On success, the subscribers table shows the empty state, and a success toast/message is shown.",
-        "On failure (including Unauthorized), an error toast/message is shown and no UI state is incorrectly cleared client-side."
+        "frontend/src/pages/BillingPage.tsx uses the new React Query hook to fetch billing entries for (selectedYear, selectedMonth).",
+        "The page renders a visible list/table with at least two columns: Subscriber Name and Amount Owed (formatted as USD using existing money formatting helpers).",
+        "When the user selects March (value 3), the results shown correspond to month=3 queries.",
+        "Loading state shows a skeleton (or equivalent) while the billing query is fetching.",
+        "Error state shows an alert with English user-facing text describing that billing data could not be loaded.",
+        "The previous placeholder message indicating billing is unavailable is removed or replaced so the page no longer claims backend support is missing once the feature is implemented."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/SubscribersPage.tsx",
+          "path": "frontend/src/pages/BillingPage.tsx",
           "operation": "modify",
-          "description": "Wire an admin-only 'Delete all subscribers' action into the existing header actions area (near Bulk Import) using the existing useIsCallerAdmin guard so non-admins never see it. Add local state to control a confirmation Dialog (using existing shadcn/ui Dialog primitives already imported) that clearly warns the action is irreversible and will delete subscribers and billing data. On confirm, call the new useDeleteAllSubscribers mutation; disable the confirm button while mutation is pending; on success, show a toast including the deleted count returned by the backend and close the dialog; on error (including Unauthorized), show an error toast and do not clear UI state manually (rely on query invalidation/refetch). Verify the shadcn-ui component usage instructions before implementing, and verify the authorization component's frontend usage instructions before implementing."
+          "description": "Wire the new monthly billing hook into the page, passing selectedYear/selectedMonth so March (3) triggers month=3 queries. Replace the current 'billing unavailable / backend missing' placeholder alert and empty-state copy with: (1) Skeleton-based loading UI while the billing query is fetching, (2) an error <Alert> with English text when the query fails, and (3) a visible table/list rendering billing entries with columns 'Subscriber Name' and 'Amount Owed'. Use the existing frontend/src/lib/money.ts formatUSD helper to format the owed amount as USD."
         }
       ]
     }
