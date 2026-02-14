@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, Subscriber, Package, BulkImportInput, BulkImportResult, DeleteAllSubscribersResult, MonthlyBillsResult } from '../backend';
+import type { UserProfile, Subscriber, Package, BulkImportInput, BulkImportResult, DeleteAllSubscribersResult, MonthlyBillsResult, CallerPaymentDue, SubscriberResult, SubscriberLoginInput } from '../backend';
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -82,6 +82,44 @@ export function useBulkCreateSubscribers() {
   });
 }
 
+// Create Single Subscriber
+export function useCreateSubscriber() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      fullName: string;
+      phone: string;
+      packageId: bigint;
+      subscriptionStartDate: bigint;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      const result = await actor.createSubscriber(
+        input.fullName,
+        input.phone,
+        input.packageId,
+        input.subscriptionStartDate
+      );
+      
+      // If backend returned an error, throw it
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      // If no result was returned, throw a generic error
+      if (!result.result) {
+        throw new Error('Failed to create subscriber');
+      }
+      
+      return result.result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscribers'] });
+    },
+  });
+}
+
 // Delete All Subscribers
 export function useDeleteAllSubscribers() {
   const { actor } = useActor();
@@ -112,5 +150,57 @@ export function useMonthlyBills(year: number, month: number) {
     },
     enabled: !!actor && !isFetching,
     retry: false,
+  });
+}
+
+// Caller Monthly Due Query
+export function useGetCallerMonthlyDue(year: number, month: number) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<CallerPaymentDue>({
+    queryKey: ['callerDue', year, month],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getCallerMonthlyDue(BigInt(year), BigInt(month));
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
+  });
+}
+
+// Subscriber Claim Mutation
+export function useClaimSubscriber() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { phone: string; name: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      
+      const loginInput: SubscriberLoginInput = {
+        phone: input.phone,
+        name: input.name,
+        subscriberId: undefined,
+      };
+      
+      const result = await actor.loginClaimSubscriber(loginInput);
+      
+      // If backend returned an error, throw it
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      // If no result was returned, throw a generic error
+      if (!result.result) {
+        throw new Error('فشل ربط الحساب');
+      }
+      
+      return result;
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries after successful claim
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['callerDue'] });
+    },
   });
 }

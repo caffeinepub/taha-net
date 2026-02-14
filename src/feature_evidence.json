@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-expose-the-new-backend-monthly-amounts-query-in-the-frontend-react-query-data-layer-as-a-typed-hook-and-ensure-cache-keys-are-parameterized-by-year-and-month",
-      "featureTitle": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
+      "featureId": "feature-create-a-new-subscriber-login-ui-that-lets-an-authenticated-user-claim-sign-in-to-a-subscriber-account-by-entering-a-phone-number-exactly-10-digits-must-start-with-09-showing-an-input-hint-like-09xxxxxxxx-and-blocking-submission-until-the-input-is-valid",
+      "featureTitle": "Create a new Subscriber Login UI that lets an authenticated user claim/sign-in to a subscriber account by entering a phone number (exactly 10 digits, must start with \"09\"), showing an input hint like \"09xxxxxxxx\" and blocking submission until the input is valid.",
       "files": [
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/lib/phone.ts",
+        "frontend/src/pages/SubscriberLoginPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -16,15 +18,17 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-monthly-billing-page-to-display-a-table-list-for-the-selected-month-year-that-shows-each-subscriber-s-name-and-the-amount-owed-and-ensure-march-month-3-works-when-selected",
-      "featureTitle": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
+      "featureId": "feature-integrate-the-subscriber-login-claim-flow-into-the-existing-authentication-profile-flow-when-a-user-is-authenticated-but-has-no-saved-profile-provide-a-path-to-the-new-subscriber-login-screen-on-successful-claim-save-the-caller-user-profile-with-the-entered-phone-number-and-a-reasonable-display-name-derived-from-the-claimed-subscriber-or-a-fallback-if-not-available",
+      "featureTitle": "Integrate the subscriber login/claim flow into the existing authentication/profile flow: when a user is authenticated but has no saved profile, provide a path to the new Subscriber Login screen; on successful claim, save the caller user profile with the entered phone number and a reasonable display name derived from the claimed subscriber (or a fallback if not available).",
       "files": [
-        "frontend/src/pages/BillingPage.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/auth/ProfileSetupModal.tsx",
+        "frontend/src/pages/SubscriberLoginPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -36,6 +40,25 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-consistent-distinctive-visual-theme-for-the-new-subscriber-login-screen-that-fits-the-app-domain-and-existing-rtl-styling-avoiding-a-blue-purple-dominant-palette-keep-typography-and-spacing-consistent-with-existing-shadcn-tailwind-components",
+      "featureTitle": "Apply a consistent, distinctive visual theme for the new Subscriber Login screen that fits the app domain and existing RTL styling, avoiding a blue/purple-dominant palette; keep typography and spacing consistent with existing shadcn + Tailwind components.",
+      "files": [
+        "frontend/src/pages/SubscriberLoginPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

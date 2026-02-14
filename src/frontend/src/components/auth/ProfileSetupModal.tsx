@@ -5,8 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSaveCallerUserProfile } from '../../hooks/useQueries';
 import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
 
-export function ProfileSetupModal() {
+interface ProfileSetupModalProps {
+  onSubscriberLogin?: () => void;
+}
+
+export function ProfileSetupModal({ onSubscriberLogin }: ProfileSetupModalProps) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const saveProfile = useSaveCallerUserProfile();
@@ -66,6 +71,25 @@ export function ProfileSetupModal() {
             {saveProfile.isPending ? 'جاري إنشاء الملف الشخصي...' : 'متابعة'}
           </Button>
         </form>
+
+        {onSubscriberLogin && (
+          <>
+            <div className="relative">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+                أو
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={onSubscriberLogin}
+            >
+              لدي حساب مشترك مسجل
+            </Button>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -1,16 +1,21 @@
 {
-  "frontend/src/App.tsx": "Main application component with Arabic UI text, RTL-adjusted icon spacing, and tab-based navigation between Dashboard, Subscribers, and Billing pages.",
-  "frontend/src/hooks/useQueries.ts": "React Query hooks for backend operations including user profiles, packages, admin status checking, bulk import, delete all subscribers, and monthly billing with proper cache invalidation.",
+  "frontend/src/App.tsx": "Main application component with role-based navigation, subscriber login flow integration for authenticated users without profiles, and proper state management for setup flow transitions.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for backend operations including user profiles, packages, admin status, bulk import, single subscriber creation, delete all subscribers, monthly billing, caller monthly dues, and new subscriber claim mutation with proper cache invalidation.",
   "frontend/src/lib/money.ts": "USD currency formatting utilities using Intl.NumberFormat and bigint conversion helpers for backend operations.",
   "frontend/src/lib/whatsapp.ts": "WhatsApp phone number validation, sanitization, and wa.me URL generation utilities with error handling.",
   "frontend/src/components/auth/AuthGate.tsx": "Login screen component with Arabic text and RTL-adjusted icon positioning for unauthenticated users.",
-  "frontend/src/components/auth/ProfileSetupModal.tsx": "Profile setup modal with Arabic labels, placeholders, and toast messages for first-time users.",
+  "frontend/src/components/auth/ProfileSetupModal.tsx": "Profile setup modal with Arabic labels and optional navigation to subscriber login flow via \"I have a registered subscriber account\" button.",
   "frontend/src/components/auth/LoginButton.tsx": "Reusable login/logout button with Arabic labels and RTL icon spacing.",
   "frontend/src/pages/DashboardPage.tsx": "Dashboard page with Arabic UI displaying month/year selectors and placeholder stats cards with a message indicating that billing data requires additional backend implementation.",
-  "frontend/src/pages/SubscribersPage.tsx": "Simplified subscriber management page with Arabic UI that only supports bulk import and delete all operations for admins, as individual subscriber CRUD operations are not available in the backend.",
+  "frontend/src/pages/SubscribersPage.tsx": "Subscriber management page with Arabic UI supporting bulk import, single subscriber creation via \"Add Subscriber\" dialog, and delete all operations for admins, with proper form validation and toast notifications.",
   "frontend/src/pages/BillingPage.tsx": "Billing page with Arabic UI displaying month/year selectors and a table showing subscriber names and amounts owed for the selected month, with loading and error states.",
   "frontend/src/index.css": "Global styles with OKLCH color system and RTL-specific adjustments for proper text alignment and direction in Arabic.",
   "frontend/tailwind.config.js": "Tailwind configuration with custom color tokens, Inter/JetBrains Mono fonts, and extended design system utilities.",
   "frontend/index.html": "HTML entry point configured for Arabic language (lang=\"ar\") and RTL direction (dir=\"rtl\").",
-  "frontend/src/lib/placeholderPhone.ts": "Helper utility to detect backend-generated placeholder phone numbers by checking for the \"placeholder-\" prefix pattern."
+  "frontend/src/lib/placeholderPhone.ts": "Helper utility to detect backend-generated placeholder phone numbers by checking for the \"placeholder-\" prefix pattern.",
+  "frontend/src/components/auth/AccessDeniedScreen.tsx": "Reusable access denied screen component displayed when non-admin users attempt to access admin-only content.",
+  "frontend/src/pages/OwnerOperationsPage.tsx": "Owner operations landing page with Arabic UI that provides navigation cards to Dashboard, Subscribers, and Billing pages for admin users.",
+  "frontend/src/pages/MyDuesPage.tsx": "Subscriber-facing page with Arabic UI showing monthly payment dues with month/year selectors, loading states, and error handling for unlinked accounts, now with all required icon imports.",
+  "frontend/src/lib/phone.ts": "Phone number validation and sanitization utilities for Iraqi phone numbers, enforcing 10-digit format starting with \"09\" with Arabic error messages.",
+  "frontend/src/pages/SubscriberLoginPage.tsx": "Subscriber login page with phone number input (10 digits starting with 09), real-time validation, inline error messages, and disabled submit until valid with Arabic RTL UI."
 }

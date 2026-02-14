@@ -6,10 +6,12 @@ import Time "mo:core/Time";
 import Nat "mo:core/Nat";
 import Array "mo:core/Array";
 import Runtime "mo:core/Runtime";
+import Migration "migration";
 import Principal "mo:core/Principal";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
+(with migration = Migration.run)
 actor {
   // Initialize the access control system
   let accessControlState = AccessControl.initState();
@@ -35,6 +37,13 @@ actor {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
     userProfiles.get(user);
+  };
+
+  public query ({ caller }) func isPhoneNumberTaken(phone : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can check phone numbers");
+    };
+    phoneToSubscriberId.containsKey(phone);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
@@ -296,6 +305,239 @@ actor {
           };
         };
       };
+    };
+  };
+
+  public type CallerPaymentDue = {
+    year : Nat;
+    month : Nat;
+    amountCents : Nat;
+  };
+
+  public query ({ caller }) func getCallerMonthlyDue(year : Nat, month : Nat) : async CallerPaymentDue {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can get due");
+    };
+
+    let userProfile = switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Caller does not have a user profile") };
+      case (?profile) { profile };
+    };
+
+    let phone = userProfile.phone;
+    let subscriberId = switch (phoneToSubscriberId.get(phone)) {
+      case (?id) { id };
+      case (null) { Runtime.trap("Caller does not have an active subscription") };
+    };
+
+    let subscriber = switch (subscribers.get(subscriberId)) {
+      case (?sub) { sub };
+      case (null) { Runtime.trap("No subscriber found for id: " # subscriberId.toText()) };
+    };
+
+    if (not subscriber.active) {
+      Runtime.trap("Subscription with this phone number is not booked");
+    };
+
+    let pkg = switch (globalPackages.get(subscriber.packageId)) {
+      case (null) { Runtime.trap("Subscription package not found") };
+      case (?p) { p };
+    };
+
+    {
+      year;
+      month;
+      amountCents = pkg.priceUsd;
+    };
+  };
+
+  // Admin-only: Create a single subscriber
+  public shared ({ caller }) func createSubscriber(
+    fullName : Text,
+    phone : Text,
+    packageId : Nat,
+    subscriptionStartDate : Time.Time,
+  ) : async SubscriberResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can create subscribers");
+    };
+
+    let trimmedName = fullName.trim(#char(' '));
+
+    // Check if the name is valid (non-empty)
+    if (trimmedName.size() <= 0) {
+      return {
+        result = null;
+        error = ?"Invalid Name: Full name cannot be empty";
+      };
+    };
+
+    // Check for duplicate phone number
+    switch (phoneToSubscriberId.get(phone)) {
+      case (?_) {
+        return {
+          result = null;
+          error = ?"Duplicate: Phone number already exists";
+        };
+      };
+      case (null) {};
+    };
+
+    let subscriber = {
+      id = nextSubscriberId;
+      fullName = trimmedName;
+      phone;
+      packageId;
+      active = true;
+      subscriptionStartDate;
+    };
+
+    subscribers.add(nextSubscriberId, subscriber);
+    activeSubscribers.add(nextSubscriberId);
+    phoneToSubscriberId.add(phone, nextSubscriberId);
+
+    nextSubscriberId += 1;
+
+    {
+      result = ?subscriber;
+      error = null;
+    };
+  };
+
+  public type SubscriberResult = {
+    result : ?Subscriber;
+    error : ?Text;
+  };
+
+  // Lock/Claim subscriber to caller
+  public type SubscriberLoginResult = {
+    result : ?Subscriber;
+    error : ?Text;
+    claimedPhone : ?Text;
+  };
+
+  public type SubscriberLoginInput = {
+    name : Text;
+    phone : Text;
+    subscriberId : ?Nat;
+  };
+
+  public shared ({ caller }) func loginClaimSubscriber(loginInput : SubscriberLoginInput) : async SubscriberLoginResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can claim subscriber");
+    };
+
+    switch (phoneToSubscriberId.get(loginInput.phone)) {
+      case (?_) {
+        return {
+          result = null;
+          error = ?"Duplicate: Phone number already exists";
+          claimedPhone = ?loginInput.phone;
+        };
+      };
+      case (null) {};
+    };
+
+    let subscriber =
+      switch (loginInput.subscriberId, loginInput.name) {
+        case (?id, _) {
+          switch (subscribers.get(id)) {
+            case (?subscriber) {
+              subscriber;
+            };
+            case (null) {
+              return {
+                result = null;
+                error = ?("Subscriber not found for id: " # id.toText());
+                claimedPhone = null;
+              };
+            };
+          };
+        };
+        case (null, name) {
+          let matchingSubscribers = List.empty<Subscriber>();
+          let searchText = name.trim(#char(' '));
+          if (searchText == "") {
+            return {
+              result = null;
+              error = ?("Name must not be empty");
+              claimedPhone = null;
+            };
+          };
+          for ((id, subscriber) in subscribers.entries()) {
+            let subscriberText = subscriber.fullName.trim(#char(' '));
+            if (
+              subscriber.active and
+              (subscriberText.size() > 0) and
+              subscriberText.contains(#text(searchText))
+            ) {
+              matchingSubscribers.add(subscriber);
+            };
+          };
+          let matches = matchingSubscribers.toArray();
+          if (matches.size() == 1) { (matches[0]) } else if (matches.size() > 1) {
+            return {
+              result = null;
+              error = ?("Found " # matches.size().toText() # " matches");
+              claimedPhone = null;
+            };
+          } else {
+            return {
+              result = null;
+              error = ?("No subscriber match found for " # searchText);
+              claimedPhone = null;
+            };
+          };
+        };
+      };
+
+    if (not subscriber.active) {
+      return {
+        result = null;
+        error = ?("Only booked (active) subscribers can be claimed");
+        claimedPhone = null;
+      };
+    };
+
+    switch (userProfiles.get(caller)) {
+      case (?profile) {
+        if (
+          profile.phone != "" and profile.phone != subscriber.phone
+        ) {
+          return {
+            result = null;
+            error = (
+              ?("You already claimed a different number (" # profile.phone # "): " # subscriber.fullName)
+            );
+            claimedPhone = ?subscriber.phone;
+          };
+        };
+      };
+      case (null) {};
+    };
+
+    // Lock phone to caller
+    let newProfile = {
+      name = subscriber.fullName;
+      phone = loginInput.phone;
+    };
+
+    userProfiles.add(caller, newProfile);
+
+    let newSubscriber = {
+      subscriber with fullName = subscriber.fullName;
+      active = subscriber.active;
+      phone = loginInput.phone;
+    };
+
+    subscribers.add(newSubscriber.id, newSubscriber);
+
+    phoneToSubscriberId.add(loginInput.phone, newSubscriber.id);
+
+    {
+      result = ?newSubscriber;
+      error = null;
+      claimedPhone = ?loginInput.phone;
     };
   };
 };

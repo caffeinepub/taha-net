@@ -20,6 +20,11 @@ export interface BulkImportResult {
   'name' : string,
   'error' : [] | [string],
 }
+export interface CallerPaymentDue {
+  'month' : bigint,
+  'year' : bigint,
+  'amountCents' : bigint,
+}
 export interface DeleteAllSubscribersResult { 'subscribersDeleted' : bigint }
 export interface MonthlyBillsResult {
   'month' : bigint,
@@ -35,9 +40,23 @@ export interface Subscriber {
   'phone' : string,
   'packageId' : bigint,
 }
+export interface SubscriberLoginInput {
+  'subscriberId' : [] | [bigint],
+  'name' : string,
+  'phone' : string,
+}
+export interface SubscriberLoginResult {
+  'result' : [] | [Subscriber],
+  'claimedPhone' : [] | [string],
+  'error' : [] | [string],
+}
 export interface SubscriberMonthlyBill {
   'fullName' : string,
   'amountDue' : bigint,
+}
+export interface SubscriberResult {
+  'result' : [] | [Subscriber],
+  'error' : [] | [string],
 }
 export type Time = bigint;
 export interface UserProfile { 'name' : string, 'phone' : string }
@@ -52,14 +71,24 @@ export interface _SERVICE {
     Array<BulkImportResult>
   >,
   'createPackage' : ActorMethod<[string, bigint], Package>,
+  'createSubscriber' : ActorMethod<
+    [string, string, bigint, Time],
+    SubscriberResult
+  >,
   'deleteAllSubscribers' : ActorMethod<[], DeleteAllSubscribersResult>,
   'fetchMonthlyBills' : ActorMethod<[bigint, bigint], MonthlyBillsResult>,
   'getAllPackages' : ActorMethod<[], Array<Package>>,
+  'getCallerMonthlyDue' : ActorMethod<[bigint, bigint], CallerPaymentDue>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getPackage' : ActorMethod<[bigint], Package>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isPhoneNumberTaken' : ActorMethod<[string], boolean>,
+  'loginClaimSubscriber' : ActorMethod<
+    [SubscriberLoginInput],
+    SubscriberLoginResult
+  >,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'updatePackage' : ActorMethod<[bigint, string, bigint], Package>,
 }

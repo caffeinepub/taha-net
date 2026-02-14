@@ -1,24 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Build a subscriber login page where subscribers sign in using a phone number, with validation/hint enforcing a 10-digit number starting with 09.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-expose-the-new-backend-monthly-amounts-query-in-the-frontend-react-query-data-layer-as-a-typed-hook-and-ensure-cache-keys-are-parameterized-by-year-and-month",
-      "title": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
+      "id": "feature-create-a-new-subscriber-login-ui-that-lets-an-authenticated-user-claim-sign-in-to-a-subscriber-account-by-entering-a-phone-number-exactly-10-digits-must-start-with-09-showing-an-input-hint-like-09xxxxxxxx-and-blocking-submission-until-the-input-is-valid",
+      "title": "Create a new Subscriber Login UI that lets an authenticated user claim/sign-in to a subscriber account by entering a phone number (exactly 10 digits, must start with \"09\"), showing an input hint like \"09xxxxxxxx\" and blocking submission until the input is valid.",
       "reqIds": [
-        "REQ-2"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-monthly-billing-page-to-display-a-table-list-for-the-selected-month-year-that-shows-each-subscriber-s-name-and-the-amount-owed-and-ensure-march-month-3-works-when-selected",
-      "title": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
+      "id": "feature-integrate-the-subscriber-login-claim-flow-into-the-existing-authentication-profile-flow-when-a-user-is-authenticated-but-has-no-saved-profile-provide-a-path-to-the-new-subscriber-login-screen-on-successful-claim-save-the-caller-user-profile-with-the-entered-phone-number-and-a-reasonable-display-name-derived-from-the-claimed-subscriber-or-a-fallback-if-not-available",
+      "title": "Integrate the subscriber login/claim flow into the existing authentication/profile flow: when a user is authenticated but has no saved profile, provide a path to the new Subscriber Login screen; on successful claim, save the caller user profile with the entered phone number and a reasonable display name derived from the claimed subscriber (or a fallback if not available).",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-consistent-distinctive-visual-theme-for-the-new-subscriber-login-screen-that-fits-the-app-domain-and-existing-rtl-styling-avoiding-a-blue-purple-dominant-palette-keep-typography-and-spacing-consistent-with-existing-shadcn-tailwind-components",
+      "title": "Apply a consistent, distinctive visual theme for the new Subscriber Login screen that fits the app domain and existing RTL styling, avoiding a blue/purple-dominant palette; keep typography and spacing consistent with existing shadcn + Tailwind components.",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -26,20 +34,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Display the subscriber/customer name along with the amount owed for the month of March",
+      "summary": "Create subscriber login page using phone number (10 digits) with input hint/validation (e.g., starts with 09)",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-2",
-      "summary": "Add a backend query API that returns, for a given (year, month), a list of active subscribers with their full name and the amount owed for that month, computed from the subscriber's package price.",
+      "id": "AR-3",
+      "summary": "Add backend support for subscriber login/claim by phone number embedded in the subscriber full name: implement a method that, given a phone number, finds an active subscriber whose `fullName` contains that phone number, and then (a) assigns that phone number to the subscriber record if it currently has a placeholder phone, (b) updates `phoneToSubscriberId` accordingly, and (c) returns a clear success/error result for the frontend.",
       "reqIds": [
-        "REQ-1"
+        "REQ-2"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Show subscriber name with amount owed for March in Monthly Billing",
+  "projectName": "Add subscriber phone-number login (10 digits starting with 09) with hint and validation",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

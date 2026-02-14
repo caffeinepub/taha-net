@@ -1,76 +1,95 @@
 {
   "kind": "build_request",
-  "title": "Show subscriber name with amount owed for March in Monthly Billing",
+  "title": "Add subscriber phone-number login (10 digits starting with 09) with hint and validation",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a backend query API that returns, for a given (year, month), a list of active subscribers with their full name and the amount owed for that month, computed from the subscriber's package price.",
-      "target": "backend",
+      "text": "Create a new Subscriber Login UI that lets an authenticated user claim/sign-in to a subscriber account by entering a phone number (exactly 10 digits, must start with \"09\"), showing an input hint like \"09xxxxxxxx\" and blocking submission until the input is valid.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "recent-messages/user-1"
         ],
         "quotes": [
-          "الاسم مع  المبلغ عليه شهر مارس"
+          "صفحة مشترك تسجيل الدخول \nباستخدام رقم هاتف مدخل في اسم المشترك \nتلميح دخل مربع فقط عشرة ارقام×××××××× 09"
         ]
       },
       "acceptanceCriteria": [
-        "A new Motoko query method exists in backend/main.mo that accepts (year: Nat, month: Nat).",
-        "The method returns an array of entries containing at minimum: subscriberId, fullName, and amountUsd (Nat).",
-        "For each entry, amountUsd equals the subscriber's package priceUsd (from globalPackages) when the subscriber is active and the subscriptionStartDate is on or before the requested month/year; otherwise the subscriber is omitted (or amountUsd is 0, but behavior must be consistent and documented in code comments).",
-        "If a subscriber's packageId is missing from globalPackages, the entry is safely skipped or returns amountUsd = 0 (no trap).",
-        "The method is admin-only (consistent with other subscriber-management operations), and traps with an Unauthorized message for non-admin callers."
+        "A new screen/page exists for subscriber login/claim that contains a single phone input and a primary submit button.",
+        "The phone input only accepts digits, enforces exactly 10 digits, and validates that the value starts with \"09\".",
+        "The UI displays a clear hint/placeholder example in the phone field: \"09xxxxxxxx\" (or equivalent).",
+        "If the input is invalid, the submit button is disabled and an inline error message is shown.",
+        "On successful submit, the app proceeds so the subscriber can access the existing \"My Dues\" flow without manual refresh (React Query caches are updated/invalidated as needed)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
-      "target": "frontend",
+      "text": "Add backend support for subscriber login/claim by phone number embedded in the subscriber full name: implement a method that, given a phone number, finds an active subscriber whose `fullName` contains that phone number, and then (a) assigns that phone number to the subscriber record if it currently has a placeholder phone, (b) updates `phoneToSubscriberId` accordingly, and (c) returns a clear success/error result for the frontend.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "recent-messages/user-1"
         ],
         "quotes": [
-          "الاسم مع  المبلغ عليه شهر مارس"
+          "باستخدام رقم هاتف مدخل في اسم المشترك"
         ]
       },
       "acceptanceCriteria": [
-        "A new hook is added in frontend/src/hooks/useQueries.ts that calls the new backend query and returns the result via useQuery.",
-        "The queryKey includes both selectedYear and selectedMonth (e.g., ['billing','month',year,month]) so changing filters refetches correctly.",
-        "The hook handles the 'actor not available' case consistently with existing hooks (no crashes)."
+        "A new public shared backend method exists to claim/link a subscriber using a phone number found within `Subscriber.fullName`.",
+        "If no matching active subscriber is found, the method returns an error that the frontend can display.",
+        "If multiple subscribers match the same phone substring, the method returns an error indicating ambiguity (do not silently pick one).",
+        "If the subscriber already has a non-placeholder phone, the method does not overwrite it and returns an appropriate error.",
+        "On success, `Subscriber.phone` is set to the provided phone and `phoneToSubscriberId` maps that phone to the subscriber id, enabling `getCallerMonthlyDue` to work after the caller profile phone is saved."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
-      "target": "frontend",
+      "text": "Integrate the subscriber login/claim flow into the existing authentication/profile flow: when a user is authenticated but has no saved profile, provide a path to the new Subscriber Login screen; on successful claim, save the caller user profile with the entered phone number and a reasonable display name derived from the claimed subscriber (or a fallback if not available).",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "recent-messages/user-1"
         ],
         "quotes": [
-          "الاسم مع  المبلغ عليه شهر مارس"
+          "صفحة مشترك تسجيل الدخول"
         ]
       },
       "acceptanceCriteria": [
-        "frontend/src/pages/BillingPage.tsx uses the new React Query hook to fetch billing entries for (selectedYear, selectedMonth).",
-        "The page renders a visible list/table with at least two columns: Subscriber Name and Amount Owed (formatted as USD using existing money formatting helpers).",
-        "When the user selects March (value 3), the results shown correspond to month=3 queries.",
-        "Loading state shows a skeleton (or equivalent) while the billing query is fetching.",
-        "Error state shows an alert with English user-facing text describing that billing data could not be loaded.",
-        "The previous placeholder message indicating billing is unavailable is removed or replaced so the page no longer claims backend support is missing once the feature is implemented."
+        "Authenticated users with no existing profile can reach the Subscriber Login screen (without editing immutable auth hooks).",
+        "Submitting the subscriber login/claim performs the backend claim call and then saves `UserProfile.phone` for the caller.",
+        "After completion, the user can open the existing \"My Dues\" page and see results for the entered phone (assuming billing state exists).",
+        "Errors from either claim or profile save are surfaced to the user via existing toast/inline messaging patterns."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Apply a consistent, distinctive visual theme for the new Subscriber Login screen that fits the app domain and existing RTL styling, avoiding a blue/purple-dominant palette; keep typography and spacing consistent with existing shadcn + Tailwind components.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages/user-1"
+        ],
+        "quotes": [
+          "صفحة مشترك تسجيل الدخول"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Subscriber Login screen uses existing UI components (Card, Input, Button, etc.) and matches the app’s overall look and RTL layout.",
+        "Primary/secondary colors used for the screen are consistent and not predominantly blue/purple.",
+        "The screen looks correct in both light and dark themes (if enabled by existing theme provider)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo if a stable-state upgrade is required.",
-    "Do not edit files under frontend/src/components/ui or any paths listed in frontend.immutablePaths (compose components instead)."
+    "Do not edit files under `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, or anything in `frontend/src/components/ui` (compose them instead).",
+    "Backend must remain a single Motoko actor in `backend/main.mo`; only add `backend/migration.mo` if state migration is required."
   ],
   "nonGoals": [
-    "Implementing full billing lifecycle management (marking months paid/unpaid, editing per-subscriber billing status) beyond computing and displaying the amount owed.",
-    "Adding third-party authentication or external database/storage.",
-    "Changing app language/RTL layout globally."
+    "Implementing phone-number authentication without Internet Identity.",
+    "Adding SMS/OTP verification.",
+    "Adding external databases or third-party auth providers.",
+    "Building real-time features (WebSockets/push)."
   ],
   "imageRequirements": {
     "required": [],

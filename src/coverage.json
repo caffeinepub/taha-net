@@ -1,58 +1,82 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T01:52:02.896Z",
+  "generatedAt": "2026-02-14T02:43:50.019Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 2,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a backend query API that returns, for a given (year, month), a list of active subscribers with their full name and the amount owed for that month, computed from the subscriber's package price.",
+        "summary": "Create a new Subscriber Login UI that lets an authenticated user claim/sign-in to a subscriber account by entering a phone number (exactly 10 digits, must start with \"09\"), showing an input hint like \"09xxxxxxxx\" and blocking submission until the input is valid.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/lib/phone.ts",
+          "frontend/src/pages/SubscriberLoginPage.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/lib/phone.ts",
+          "frontend/src/pages/SubscriberLoginPage.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Add backend support for subscriber login/claim by phone number embedded in the subscriber full name: implement a method that, given a phone number, finds an active subscriber whose `fullName` contains that phone number, and then (a) assigns that phone number to the subscriber record if it currently has a placeholder phone, (b) updates `phoneToSubscriberId` accordingly, and (c) returns a clear success/error result for the frontend.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-2",
-        "summary": "Expose the new backend monthly-amounts query in the frontend React Query data layer as a typed hook, and ensure cache keys are parameterized by year and month.",
+        "id": "REQ-3",
+        "summary": "Integrate the subscriber login/claim flow into the existing authentication/profile flow: when a user is authenticated but has no saved profile, provide a path to the new Subscriber Login screen; on successful claim, save the caller user profile with the entered phone number and a reasonable display name derived from the claimed subscriber (or a fallback if not available).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/App.tsx",
+          "frontend/src/components/auth/ProfileSetupModal.tsx",
+          "frontend/src/pages/SubscriberLoginPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/App.tsx",
+          "frontend/src/components/auth/ProfileSetupModal.tsx",
+          "frontend/src/pages/SubscriberLoginPage.tsx"
         ]
       },
       {
-        "id": "REQ-3",
-        "summary": "Update the Monthly Billing page to display a table/list for the selected month/year that shows each subscriber's name and the amount owed, and ensure March (month=3) works when selected.",
+        "id": "REQ-4",
+        "summary": "Apply a consistent, distinctive visual theme for the new Subscriber Login screen that fits the app domain and existing RTL styling, avoiding a blue/purple-dominant palette; keep typography and spacing consistent with existing shadcn + Tailwind components.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/BillingPage.tsx"
+          "frontend/src/pages/SubscriberLoginPage.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/BillingPage.tsx"
+          "frontend/src/pages/SubscriberLoginPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
+    "frontend/src/components/auth/ProfileSetupModal.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/BillingPage.tsx",
+    "frontend/src/lib/phone.ts",
+    "frontend/src/pages/SubscriberLoginPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

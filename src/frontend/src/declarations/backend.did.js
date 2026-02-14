@@ -37,6 +37,10 @@ export const Package = IDL.Record({
   'name' : IDL.Text,
   'priceUsd' : IDL.Nat,
 });
+export const SubscriberResult = IDL.Record({
+  'result' : IDL.Opt(Subscriber),
+  'error' : IDL.Opt(IDL.Text),
+});
 export const DeleteAllSubscribersResult = IDL.Record({
   'subscribersDeleted' : IDL.Nat,
 });
@@ -49,9 +53,24 @@ export const MonthlyBillsResult = IDL.Record({
   'year' : IDL.Nat,
   'subscribers' : IDL.Vec(SubscriberMonthlyBill),
 });
+export const CallerPaymentDue = IDL.Record({
+  'month' : IDL.Nat,
+  'year' : IDL.Nat,
+  'amountCents' : IDL.Nat,
+});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'phone' : IDL.Text,
+});
+export const SubscriberLoginInput = IDL.Record({
+  'subscriberId' : IDL.Opt(IDL.Nat),
+  'name' : IDL.Text,
+  'phone' : IDL.Text,
+});
+export const SubscriberLoginResult = IDL.Record({
+  'result' : IDL.Opt(Subscriber),
+  'claimedPhone' : IDL.Opt(IDL.Text),
+  'error' : IDL.Opt(IDL.Text),
 });
 
 export const idlService = IDL.Service({
@@ -63,6 +82,11 @@ export const idlService = IDL.Service({
       [],
     ),
   'createPackage' : IDL.Func([IDL.Text, IDL.Nat], [Package], []),
+  'createSubscriber' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Nat, Time],
+      [SubscriberResult],
+      [],
+    ),
   'deleteAllSubscribers' : IDL.Func([], [DeleteAllSubscribersResult], []),
   'fetchMonthlyBills' : IDL.Func(
       [IDL.Nat, IDL.Nat],
@@ -70,6 +94,11 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getAllPackages' : IDL.Func([], [IDL.Vec(Package)], ['query']),
+  'getCallerMonthlyDue' : IDL.Func(
+      [IDL.Nat, IDL.Nat],
+      [CallerPaymentDue],
+      ['query'],
+    ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getPackage' : IDL.Func([IDL.Nat], [Package], ['query']),
@@ -79,6 +108,12 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isPhoneNumberTaken' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+  'loginClaimSubscriber' : IDL.Func(
+      [SubscriberLoginInput],
+      [SubscriberLoginResult],
+      [],
+    ),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'updatePackage' : IDL.Func([IDL.Nat, IDL.Text, IDL.Nat], [Package], []),
 });
@@ -115,6 +150,10 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'priceUsd' : IDL.Nat,
   });
+  const SubscriberResult = IDL.Record({
+    'result' : IDL.Opt(Subscriber),
+    'error' : IDL.Opt(IDL.Text),
+  });
   const DeleteAllSubscribersResult = IDL.Record({
     'subscribersDeleted' : IDL.Nat,
   });
@@ -127,7 +166,22 @@ export const idlFactory = ({ IDL }) => {
     'year' : IDL.Nat,
     'subscribers' : IDL.Vec(SubscriberMonthlyBill),
   });
+  const CallerPaymentDue = IDL.Record({
+    'month' : IDL.Nat,
+    'year' : IDL.Nat,
+    'amountCents' : IDL.Nat,
+  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'phone' : IDL.Text });
+  const SubscriberLoginInput = IDL.Record({
+    'subscriberId' : IDL.Opt(IDL.Nat),
+    'name' : IDL.Text,
+    'phone' : IDL.Text,
+  });
+  const SubscriberLoginResult = IDL.Record({
+    'result' : IDL.Opt(Subscriber),
+    'claimedPhone' : IDL.Opt(IDL.Text),
+    'error' : IDL.Opt(IDL.Text),
+  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -138,6 +192,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'createPackage' : IDL.Func([IDL.Text, IDL.Nat], [Package], []),
+    'createSubscriber' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Nat, Time],
+        [SubscriberResult],
+        [],
+      ),
     'deleteAllSubscribers' : IDL.Func([], [DeleteAllSubscribersResult], []),
     'fetchMonthlyBills' : IDL.Func(
         [IDL.Nat, IDL.Nat],
@@ -145,6 +204,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getAllPackages' : IDL.Func([], [IDL.Vec(Package)], ['query']),
+    'getCallerMonthlyDue' : IDL.Func(
+        [IDL.Nat, IDL.Nat],
+        [CallerPaymentDue],
+        ['query'],
+      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getPackage' : IDL.Func([IDL.Nat], [Package], ['query']),
@@ -154,6 +218,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isPhoneNumberTaken' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'loginClaimSubscriber' : IDL.Func(
+        [SubscriberLoginInput],
+        [SubscriberLoginResult],
+        [],
+      ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'updatePackage' : IDL.Func([IDL.Nat, IDL.Text, IDL.Nat], [Package], []),
   });

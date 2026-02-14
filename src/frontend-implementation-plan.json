@@ -1,40 +1,81 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Monthly Billing: show subscriber name and amount owed per selected month",
+  "title": "Subscriber phone-number claim/login UI and profile integration (frontend-only)",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Add a typed React Query hook that fetches monthly billing amounts for a given year/month with a parameterized cache key.",
+      "id": "REQ-1",
+      "summary": "Add a new Subscriber Login/Claim screen with 10-digit 09xxxxxxxx hint, digit-only input, inline validation, and disabled submit until valid; on success continue into existing My Dues flow with React Query cache updates.",
       "acceptanceCriteria": [
-        "A new hook is added in frontend/src/hooks/useQueries.ts that calls the new backend query and returns the result via useQuery.",
-        "The queryKey includes both selectedYear and selectedMonth (e.g., ['billing','month',year,month]) so changing filters refetches correctly.",
-        "The hook handles the 'actor not available' case consistently with existing hooks (no crashes)."
+        "A new screen/page exists for subscriber login/claim that contains a single phone input and a primary submit button.",
+        "The phone input only accepts digits, enforces exactly 10 digits, and validates that the value starts with \"09\".",
+        "The UI displays a clear hint/placeholder example in the phone field: \"09xxxxxxxx\" (or equivalent).",
+        "If the input is invalid, the submit button is disabled and an inline error message is shown.",
+        "On successful submit, the app proceeds so the subscriber can access the existing \"My Dues\" flow without manual refresh (React Query caches are updated/invalidated as needed)."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/lib/phone.ts",
+          "operation": "create",
+          "description": "Add shared phone helpers for the subscriber-claim flow (sanitize to digits only, validate startsWith \"09\" and exact length 10, and format/derive a safe display fallback)."
+        },
+        {
+          "path": "frontend/src/pages/SubscriberLoginPage.tsx",
+          "operation": "create",
+          "description": "Create the Subscriber Login/Claim page UI using existing shadcn components (e.g., Card, Input, Label, Button, Alert) to provide a single phone field with placeholder/hint \"09xxxxxxxx\", digit-only handling, inline validation error messaging, and a primary submit button disabled until valid. Verify the component's usage instructions before implementing."
+        },
+        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a new typed React Query hook (e.g., useFetchMonthlyBills / useMonthlyBills) that calls the backend monthly billing query (per backend interface) and returns results via useQuery. Ensure the queryKey is parameterized as ['billing','month',year,month]. Mirror existing actor-availability handling (e.g., enabled gating on actor + returning safe defaults when actor is missing) to avoid crashes."
+          "description": "Add a React Query mutation hook for the subscriber claim call using the existing backend capability loginClaimSubscriber, returning/throwing clear errors for UI display; on success, invalidate/refetch relevant caches (e.g., currentUserProfile and callerDue queries) so the My Dues flow updates without refresh."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Update the Monthly Billing page to fetch and render a name + amount owed list/table for the selected month/year, with loading and error states.",
+      "summary": "Integrate subscriber claim into the authenticated no-profile flow: provide navigation to Subscriber Login, perform claim then save the caller UserProfile (phone + derived display name), and surface errors via existing toast/inline patterns.",
       "acceptanceCriteria": [
-        "frontend/src/pages/BillingPage.tsx uses the new React Query hook to fetch billing entries for (selectedYear, selectedMonth).",
-        "The page renders a visible list/table with at least two columns: Subscriber Name and Amount Owed (formatted as USD using existing money formatting helpers).",
-        "When the user selects March (value 3), the results shown correspond to month=3 queries.",
-        "Loading state shows a skeleton (or equivalent) while the billing query is fetching.",
-        "Error state shows an alert with English user-facing text describing that billing data could not be loaded.",
-        "The previous placeholder message indicating billing is unavailable is removed or replaced so the page no longer claims backend support is missing once the feature is implemented."
+        "Authenticated users with no existing profile can reach the Subscriber Login screen (without editing immutable auth hooks).",
+        "Submitting the subscriber login/claim performs the backend claim call and then saves `UserProfile.phone` for the caller.",
+        "After completion, the user can open the existing \"My Dues\" page and see results for the entered phone (assuming billing state exists).",
+        "Errors from either claim or profile save are surfaced to the user via existing toast/inline messaging patterns."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/BillingPage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the new monthly billing hook into the page, passing selectedYear/selectedMonth so March (3) triggers month=3 queries. Replace the current 'billing unavailable / backend missing' placeholder alert and empty-state copy with: (1) Skeleton-based loading UI while the billing query is fetching, (2) an error <Alert> with English text when the query fails, and (3) a visible table/list rendering billing entries with columns 'Subscriber Name' and 'Amount Owed'. Use the existing frontend/src/lib/money.ts formatUSD helper to format the owed amount as USD."
+          "description": "Extend the app’s internal page/state flow to include a Subscriber Login route/state reachable when the user is authenticated but has no saved profile; wire navigation between profile setup and subscriber login, and after successful claim+profile save, navigate directly to the existing My Dues page."
+        },
+        {
+          "path": "frontend/src/components/auth/ProfileSetupModal.tsx",
+          "operation": "modify",
+          "description": "Add a clear path/button for authenticated users with no profile to go to the Subscriber Login/Claim screen (without changing immutable auth hooks). Use existing shadcn Button/Dialog composition and existing toast patterns for any local validation messaging. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/SubscriberLoginPage.tsx",
+          "operation": "modify",
+          "description": "Wire submit behavior to: (1) call the new claim mutation, (2) derive a reasonable display name from the claimed subscriber (prefer returned subscriber.fullName, otherwise fallback), (3) save caller UserProfile with entered phone, and (4) trigger React Query cache invalidation/refetch and navigate into the My Dues view; surface claim/profile-save errors via existing inline + toast patterns. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Apply a consistent RTL-friendly visual theme for the new Subscriber Login screen using existing shadcn + Tailwind styling, avoiding blue/purple-dominant colors, and ensuring it looks good in light/dark mode.",
+      "acceptanceCriteria": [
+        "The Subscriber Login screen uses existing UI components (Card, Input, Button, etc.) and matches the app’s overall look and RTL layout.",
+        "Primary/secondary colors used for the screen are consistent and not predominantly blue/purple.",
+        "The screen looks correct in both light and dark themes (if enabled by existing theme provider)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SubscriberLoginPage.tsx",
+          "operation": "modify",
+          "description": "Apply a distinctive but consistent layout and styling for the Subscriber Login screen using existing theme tokens (e.g., background/card, primary charcoal, accent green/amber) and RTL-friendly spacing/typography; avoid blue/purple dominance and ensure dark-mode classes render correctly. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "If the new screen needs small, reusable theme utilities (e.g., a subtle non-blue/purple accent helper class), add them via existing Tailwind layers without altering shadcn component source; ensure RTL and light/dark compatibility remain intact."
         }
       ]
     }

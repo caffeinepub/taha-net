@@ -29,11 +29,12 @@ import {
   useGetAllPackages, 
   useBulkCreateSubscribers,
   useIsCallerAdmin,
-  useDeleteAllSubscribers
+  useDeleteAllSubscribers,
+  useCreateSubscriber
 } from '../hooks/useQueries';
 import { formatUSD } from '../lib/money';
 import { toast } from 'sonner';
-import { Upload, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
+import { Upload, CheckCircle2, XCircle, Trash2, UserPlus } from 'lucide-react';
 import type { BulkImportResult } from '../backend';
 
 type BulkImportFormData = {
@@ -42,11 +43,25 @@ type BulkImportFormData = {
   subscriptionStartDate: string;
 };
 
+type AddSubscriberFormData = {
+  fullName: string;
+  phone: string;
+  packageId: string;
+  subscriptionStartDate: string;
+};
+
 export function SubscribersPage() {
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const [isAddSubscriberOpen, setIsAddSubscriberOpen] = useState(false);
   const [bulkImportData, setBulkImportData] = useState<BulkImportFormData>({
     names: '',
+    packageId: '',
+    subscriptionStartDate: new Date().toISOString().split('T')[0],
+  });
+  const [addSubscriberData, setAddSubscriberData] = useState<AddSubscriberFormData>({
+    fullName: '',
+    phone: '',
     packageId: '',
     subscriptionStartDate: new Date().toISOString().split('T')[0],
   });
@@ -56,6 +71,7 @@ export function SubscribersPage() {
   const { data: isAdmin = false } = useIsCallerAdmin();
   const bulkCreateSubscribers = useBulkCreateSubscribers();
   const deleteAllSubscribers = useDeleteAllSubscribers();
+  const createSubscriber = useCreateSubscriber();
 
   const handleOpenBulkImport = () => {
     setBulkImportData({
@@ -70,6 +86,20 @@ export function SubscribersPage() {
   const handleCloseBulkImport = () => {
     setIsBulkImportOpen(false);
     setBulkImportResults(null);
+  };
+
+  const handleOpenAddSubscriber = () => {
+    setAddSubscriberData({
+      fullName: '',
+      phone: '',
+      packageId: packages[0]?.id.toString() || '',
+      subscriptionStartDate: new Date().toISOString().split('T')[0],
+    });
+    setIsAddSubscriberOpen(true);
+  };
+
+  const handleCloseAddSubscriber = () => {
+    setIsAddSubscriberOpen(false);
   };
 
   const handleOpenDeleteAll = () => {
@@ -89,6 +119,42 @@ export function SubscribersPage() {
       const errorMessage = error?.message || 'فشل حذف المشتركين. يرجى المحاولة مرة أخرى.';
       toast.error(errorMessage);
       console.error('Delete all subscribers error:', error);
+    }
+  };
+
+  const handleAddSubscriberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!addSubscriberData.fullName.trim()) {
+      toast.error('Please enter a full name');
+      return;
+    }
+
+    if (!addSubscriberData.phone.trim()) {
+      toast.error('Please enter a phone number');
+      return;
+    }
+
+    if (!addSubscriberData.packageId) {
+      toast.error('Please select a package');
+      return;
+    }
+
+    try {
+      const startDate = new Date(addSubscriberData.subscriptionStartDate).getTime() * 1000000;
+      await createSubscriber.mutateAsync({
+        fullName: addSubscriberData.fullName,
+        phone: addSubscriberData.phone,
+        packageId: BigInt(addSubscriberData.packageId),
+        subscriptionStartDate: BigInt(startDate),
+      });
+
+      toast.success('Subscriber added successfully');
+      handleCloseAddSubscriber();
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to add subscriber. Please try again.';
+      toast.error(errorMessage);
+      console.error('Add subscriber error:', error);
     }
   };
 
@@ -158,6 +224,10 @@ export function SubscribersPage() {
                 <Upload className="ml-2 h-4 w-4" />
                 Bulk Import
               </Button>
+              <Button onClick={handleOpenAddSubscriber} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <UserPlus className="ml-2 h-4 w-4" />
+                Add Subscriber
+              </Button>
             </>
           )}
         </div>
@@ -168,15 +238,101 @@ export function SubscribersPage() {
         <CardHeader>
           <CardTitle>المشتركون</CardTitle>
           <CardDescription>
-            استخدم زر "Bulk Import" لإضافة مشتركين جدد، أو زر "حذف الكل" لحذف جميع المشتركين
+            استخدم زر "Add Subscriber" لإضافة مشترك واحد، أو "Bulk Import" لإضافة مشتركين متعددين، أو "حذف الكل" لحذف جميع المشتركين
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="py-8 text-center text-muted-foreground">
-            لا توجد وظيفة عرض المشتركين متاحة حاليًا. يمكنك استخدام الاستيراد الجماعي لإضافة مشتركين.
+            لا توجد وظيفة عرض المشتركين متاحة حاليًا. يمكنك استخدام الأزرار أعلاه لإدارة المشتركين.
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Subscriber Dialog */}
+      <Dialog open={isAddSubscriberOpen} onOpenChange={setIsAddSubscriberOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Subscriber</DialogTitle>
+            <DialogDescription>
+              Add a new subscriber to the system. All fields are required.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddSubscriberSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name *</Label>
+              <Input
+                id="fullName"
+                placeholder="Enter full name"
+                value={addSubscriberData.fullName}
+                onChange={(e) =>
+                  setAddSubscriberData({ ...addSubscriberData, fullName: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Enter phone number"
+                value={addSubscriberData.phone}
+                onChange={(e) =>
+                  setAddSubscriberData({ ...addSubscriberData, phone: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="addPackageId">Package *</Label>
+              <Select
+                value={addSubscriberData.packageId}
+                onValueChange={(value) =>
+                  setAddSubscriberData({ ...addSubscriberData, packageId: value })
+                }
+                required
+              >
+                <SelectTrigger id="addPackageId">
+                  <SelectValue placeholder="Select a package" />
+                </SelectTrigger>
+                <SelectContent>
+                  {packages.map((pkg) => (
+                    <SelectItem key={pkg.id.toString()} value={pkg.id.toString()}>
+                      {pkg.name} - {formatUSD(pkg.priceUsd)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="addSubscriptionStartDate">Subscription Start Date</Label>
+              <Input
+                id="addSubscriptionStartDate"
+                type="date"
+                value={addSubscriberData.subscriptionStartDate}
+                onChange={(e) =>
+                  setAddSubscriberData({
+                    ...addSubscriberData,
+                    subscriptionStartDate: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleCloseAddSubscriber}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createSubscriber.isPending}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {createSubscriber.isPending ? 'Adding...' : 'Add Subscriber'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Import Dialog */}
       <Dialog open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
